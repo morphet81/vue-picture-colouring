@@ -1,10 +1,20 @@
 {
   "name": "vue-picture-colouring",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.1.1",
+  "license": "MIT",
+  "keywords": ["vue", "drawing", "colouring", "stickers"],
+  "main": "./dist/vue-picture-colouring.common.js",
+  "files": [
+    "dist/*",
+    "src/*",
+    "public/*",
+    "*.json",
+    "*.js"
+  ],
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "build-bundle": "vue-cli-service build --target lib --name vue-picture-colouring ./src/components/index.js",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {

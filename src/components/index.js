@@ -7,7 +7,7 @@ Vue.use(VueHammer)
 
 // List components we want to make available in the library
 const components = {
-    'vic-image': ColouringImage
+    'vpc-image': ColouringImage
 }
 
 // Globally register all the components

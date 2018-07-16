@@ -99,13 +99,17 @@
             stick (x, y) {
                 let ctx = this.canvas.getContext('2d')
 
-                // Draw the sticker
                 var stickerImage = new Image()
                 stickerImage.onload = () => {
+                    ctx.save()
+                    ctx.translate(x, y)
+                    ctx.rotate((-40 + Math.random() * 80) * Math.PI / 180)
+
+                    // Draw the sticker
                     ctx.drawImage(
                         stickerImage,
-                        x - this.stickerWidth / 2,
-                        y - this.stickerHeight / 2,
+                        -this.stickerWidth / 2,
+                        -this.stickerHeight / 2,
                         this.stickerWidth,
                         this.stickerHeight
                     )
@@ -122,6 +126,7 @@
                         }
                     }
                     ctx.putImageData(imgData, 0, 0)
+                    ctx.restore()
                 }
                 stickerImage.src = this.sticker
             },

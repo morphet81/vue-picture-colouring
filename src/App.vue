@@ -1,7 +1,8 @@
 <template>
   <div id="app">
     <vic-image class="vic-image" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
-      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="require('./assets/watch-sketch-example.png')"></vic-image>
+      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="require('./assets/watch-sketch-example.png')"
+      :stickerWidth="stickerSize" :stickerHeight="stickerSize"></vic-image>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
         <div class="color" :style="colorStyle(i)" @click="onColorClick(i)"></div>
@@ -28,6 +29,7 @@ export default {
     return {
       width: document.documentElement.clientWidth,
       height: document.documentElement.clientWidth * 9 / 14,
+      stickerSize: document.documentElement.clientWidth * 0.08,
       erase: false,
       currentColor: 0,
       currentSticker: null,

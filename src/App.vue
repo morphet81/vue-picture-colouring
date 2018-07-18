@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
-      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="require('./assets/case.png')"
+      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="mainLayers[currentMainLayer]"
       :bwSrc="require('./assets/watch-sketch-example.png')" :stickerWidth="stickerSize" :stickerHeight="stickerSize"
       :subLayers="subLayers"></vpc-image>
     <div class="colors">
@@ -17,7 +17,13 @@
         <img class="sticker" :src="sticker" :style="stickerStyle(i)" @click="onStickerClick(i)"/>
       </div>
     </div>
-    <button class="snapshot" @click="onSnapshotClick">Snapshot</button>
+    <div class="commands">
+      <div class="blank"></div>
+      <button class="switch-main-layer" @click="onSwitchMainLayerClick">Switch Main Layer</button>
+      <div class="blank"></div>
+      <button class="snapshot" @click="onSnapshotClick">Snapshot</button>
+      <div class="blank"></div>
+    </div>
     <img class="thumbnail" :src="thumbnailSrc" />
   </div>
 </template>
@@ -34,6 +40,7 @@ export default {
       height: document.documentElement.clientWidth * 9 / 14,
       stickerSize: document.documentElement.clientWidth * 0.08,
       erase: false,
+      currentMainLayer: 0,
       currentColor: 0,
       currentSticker: null,
       thumbnailSrc: null,
@@ -42,6 +49,10 @@ export default {
         '#3bdd58',
         '#3b76dd',
         '#c73bdd'
+      ],
+      mainLayers: [
+        require('./assets/case.png'),
+        require('./assets/case-2.png')
       ],
       subLayers: [
         require('./assets/wrist.png'),
@@ -101,6 +112,10 @@ export default {
       this.currentColor = null
       this.currentSticker = index
       this.erase = false
+    },
+    onSwitchMainLayerClick () {
+      this.currentMainLayer = this.currentMainLayer == 0 ? 1 : 0
+      this.$refs.vicImage.replaceMainLayer(this.mainLayers[this.currentMainLayer])
     },
     onSnapshotClick () {
       this.$refs.vicImage.snapshot().then(thumbnail => {
@@ -162,8 +177,13 @@ html, body {
   border: solid 0.5px black;
 }
 
-.snapshot {
+.commands {
+  display: flex;
   margin-top: 2vh;
+}
+
+.blank {
+  flex-grow: 1;
 }
 
 .thumbnail {

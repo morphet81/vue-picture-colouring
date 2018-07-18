@@ -209,6 +209,39 @@
                 }
                 ctx.putImageData(imgData, 0, 0)
             },
+            replaceMainLayer (newLayerSrc) {
+                let that = this
+                var image = new Image()
+                image.onload = () => {
+                    let ctx = that.canvas.getContext('2d')
+
+                    // Keep information about the former main layer pixels
+                    let formerPixels = this.originalPixels.slice()
+
+                    // Keep information about the current draw image
+                    var currentData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+                    let currentPixels = currentData.data.slice()
+
+                    // First we need to clear the canvas
+                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+                    // We draw the new layer
+                    ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height)
+
+                    // Keep an array of original pixels values
+                    this.originalPixels = this.getPixels(this.canvas)
+
+                    // Then we put back pixels values that were on the canvas but not on the former main layer
+                    var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+                    for (var i = 0; i < newLayerData.data.length; i++) {
+                        if (formerPixels[i] != currentPixels[i]) {
+                            newLayerData.data[i] = currentPixels[i]
+                        }
+                    }
+                    ctx.putImageData(newLayerData, 0, 0)
+                }
+                image.src = newLayerSrc
+            },
             snapshot () {
                 return new Promise((resolve, reject) => {
                     let that = this
@@ -222,7 +255,7 @@
                         ctx.drawImage(document.getElementById(`subLayer${i}`), 0, 0, this.canvas.width, this.canvas.height)
                     }
 
-                    // Draw mai layer
+                    // Draw main layer
                     var mainLayer = new Image()
                     mainLayer.onload = () => {
                         ctx.drawImage(mainLayer, 0, 0, that.canvas.width, that.canvas.height)

@@ -1,8 +1,9 @@
 <template>
   <div id="app">
     <vpc-image class="vic-image" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
-      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="require('./assets/watch-sketch-example-2.png')"
-      :bwSrc="require('./assets/watch-sketch-example.png')" :stickerWidth="stickerSize" :stickerHeight="stickerSize"></vpc-image>
+      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="require('./assets/case.png')"
+      :bwSrc="require('./assets/watch-sketch-example.png')" :stickerWidth="stickerSize" :stickerHeight="stickerSize"
+      :subLayers="subLayers"></vpc-image>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
         <div class="color" :style="colorStyle(i)" @click="onColorClick(i)"></div>
@@ -38,6 +39,10 @@ export default {
         '#3bdd58',
         '#3b76dd',
         '#c73bdd'
+      ],
+      subLayers: [
+        require('./assets/wrist.png'),
+        require('./assets/face.png'),
       ],
       stickers: [
         require('./assets/stickers/bull.png'),

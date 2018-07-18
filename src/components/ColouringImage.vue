@@ -1,12 +1,13 @@
 <template>
     <div>
+        <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
+        <img class="sublayer" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer"/>
+
+        <!-- Main drawing canvas -->
         <canvas ref="canvas" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
 
         <!-- Hidden canvas used at init for getting black and white image pixels -->
         <canvas ref="bwCanvas" :width="width" :height="height" v-show="false"></canvas>
-
-        <!-- This will be used for showing the tool on non mobile devices -->
-        <!-- <canvas ref="overlay" :width="width" :height="height" @click="onClick" @touchmove="onSwipe"></canvas> -->
     </div>
 </template>
 
@@ -71,6 +72,12 @@
             stickerHeight: {
                 type: Number,
                 default: 32
+            },
+            subLayers: {
+                type: Array,
+                default: () => {
+                    return []
+                }
             }
         },
         methods: {
@@ -219,8 +226,11 @@
         },
         mounted () {
             let that = this
+
+            // Load the main image
             this.image = new Image()
             this.image.onload = () => {
+                // If the black and white version is given, also load it
                 if (that.bwSrc) {
                     that.bwImage = new Image()
                     that.bwImage.onload = () => {
@@ -238,13 +248,12 @@
 
 <style scoped>
 
-    canvas {
+    canvas, .sublayer {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: aliceblue
     }
 
 </style>

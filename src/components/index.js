@@ -5,15 +5,8 @@ import { VueHammer } from 'vue2-hammer'
 // Dependencies
 Vue.use(VueHammer)
 
-// List components we want to make available in the library
-const components = {
-    'vpc-image': ColouringImage
-}
-
-// Globally register all the components
-Object.keys(components).forEach(name => {
-    Vue.component(name, components[name])
-})
+// Globally register the component
+Vue.component('vpc-image', ColouringImage)
 
 // Export
-export default components
+export default ColouringImage

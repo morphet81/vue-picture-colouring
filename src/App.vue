@@ -1,9 +1,9 @@
 <template>
   <div id="app">
     <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
-      :erase="erase" :toolWidth="18" :width="width" :height="height" :src="mainLayers[currentMainLayer]"
-      :bwSrc="require('./assets/watch-sketch-example.png')" :stickerWidth="stickerSize" :stickerHeight="stickerSize"
-      :subLayers="subLayers"></vpc-image>
+      :erase="erase" :tool-width="18" :width="width" :height="height" :src="mainLayers[currentMainLayer]"
+      :bw-src="require('./assets/watch-sketch-example.png')" :sticker-width="stickerSize" :sticker-height="stickerSize"
+      :sub-layers="subLayers"></vpc-image>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
         <div class="color" :style="colorStyle(i)" @click="onColorClick(i)"></div>
@@ -29,7 +29,8 @@
 </template>
 
 <script>
-import './components/index.js'
+// import './components/index.js'
+import vpcImage from './components/index.js'
 
 export default {
   name: 'app',
@@ -122,7 +123,8 @@ export default {
       })
     }
   },
-  mounted () {
+  components: {
+    vpcImage
   }
 }
 </script>

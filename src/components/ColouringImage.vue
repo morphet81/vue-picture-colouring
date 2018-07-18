@@ -64,7 +64,7 @@
             },
             toolWidth: {
                 type: Number,
-                default: 8
+                default: 18
             },
             stickerWidth: {
                 type: Number,

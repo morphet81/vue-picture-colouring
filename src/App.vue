@@ -29,7 +29,6 @@
 </template>
 
 <script>
-/* eslint-disable */
 import './components/index.js'
 
 export default {
@@ -103,7 +102,7 @@ export default {
       this.currentSticker = null
       this.erase = false
     },
-    onEraseClick (index) {
+    onEraseClick () {
       this.currentColor = null
       this.currentSticker = null
       this.erase = true

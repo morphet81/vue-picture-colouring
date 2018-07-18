@@ -12,8 +12,6 @@
 </template>
 
 <script>
-/* eslint-disable */
-
     import Color from 'color'
 
     export default {
@@ -261,6 +259,9 @@
                         mainLayer = null
                         resolve(this.utilCanvas.toDataURL())
                     }
+                    mainLayer.onerror = () => {
+                        reject()
+                    }
                     mainLayer.src = this.canvas.toDataURL()
                 })
             },
@@ -268,7 +269,7 @@
                 var loc = this.windowToCanvas(this.canvas, e.clientX, e.clientY)
                 this.draw(loc.x, loc.y)
             },
-            onTouchStart (e) {
+            onTouchStart () {
                 // On Safari, the canvas bounding box will change as touch goes, so we have to ensure to always
                 // use the same throughout all the move process
                 this.canvasBoundingClientRect = this.canvas.getBoundingClientRect()

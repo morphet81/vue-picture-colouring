@@ -1,13 +1,13 @@
 <template>
     <div>
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
-        <img class="sublayer" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer"/>
+        <img class="sublayer" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer" :id="`subLayer${i}`"/>
 
         <!-- Main drawing canvas -->
         <canvas ref="canvas" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
 
-        <!-- Hidden canvas used at init for getting black and white image pixels -->
-        <canvas ref="bwCanvas" :width="width" :height="height" v-show="false"></canvas>
+        <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
+        <canvas ref="utilCanvas" :width="width" :height="height" v-show="false"></canvas>
     </div>
 </template>
 
@@ -32,6 +32,9 @@
         computed: {
             canvas () {
                 return this.$refs.canvas
+            },
+            utilCanvas () {
+                return this.$refs.utilCanvas
             }
         },
         props: {
@@ -115,9 +118,9 @@
 
                 // Get black and white image pixels if there is one
                 if (this.bwSrc) {
-                    let ctx = this.$refs.bwCanvas.getContext('2d')
+                    let ctx = this.utilCanvas.getContext('2d')
                     ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
-                    this.referencePixels = this.getPixels(this.$refs.bwCanvas)
+                    this.referencePixels = this.getPixels(this.utilCanvas)
                 } else {
                     this.referencePixels = this.originalPixels
                 }
@@ -205,6 +208,29 @@
                     }
                 }
                 ctx.putImageData(imgData, 0, 0)
+            },
+            snapshot () {
+                return new Promise((resolve, reject) => {
+                    let that = this
+                    let ctx = this.utilCanvas.getContext('2d')
+
+                    // Ensure nothing remains in the canvas
+                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+                    // Draw sub layers
+                    for (var i = 0; i < this.subLayers.length; i++) {
+                        ctx.drawImage(document.getElementById(`subLayer${i}`), 0, 0, this.canvas.width, this.canvas.height)
+                    }
+
+                    // Draw mai layer
+                    var mainLayer = new Image()
+                    mainLayer.onload = () => {
+                        ctx.drawImage(mainLayer, 0, 0, that.canvas.width, that.canvas.height)
+                        mainLayer = null
+                        resolve(this.utilCanvas.toDataURL())
+                    }
+                    mainLayer.src = this.canvas.toDataURL()
+                })
             },
             onClick (e) {
                 var loc = this.windowToCanvas(this.canvas, e.clientX, e.clientY)

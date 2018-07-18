@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <vpc-image class="vic-image" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
+    <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
       :erase="erase" :toolWidth="18" :width="width" :height="height" :src="require('./assets/case.png')"
       :bwSrc="require('./assets/watch-sketch-example.png')" :stickerWidth="stickerSize" :stickerHeight="stickerSize"
       :subLayers="subLayers"></vpc-image>
@@ -9,7 +9,7 @@
         <div class="color" :style="colorStyle(i)" @click="onColorClick(i)"></div>
       </div>
       <div class="color-container">
-        <div class="color eraser" :style="eraserStyle" @click="erase = !erase"></div>
+        <div class="color eraser" :style="eraserStyle" @click="onEraseClick"></div>
       </div>
     </div>
     <div class="stickers">
@@ -17,6 +17,8 @@
         <img class="sticker" :src="sticker" :style="stickerStyle(i)" @click="onStickerClick(i)"/>
       </div>
     </div>
+    <button class="snapshot" @click="onSnapshotClick">Snapshot</button>
+    <img class="thumbnail" :src="thumbnailSrc" />
   </div>
 </template>
 
@@ -34,6 +36,7 @@ export default {
       erase: false,
       currentColor: 0,
       currentSticker: null,
+      thumbnailSrc: null,
       colors: [
         '#dd3b3b',
         '#3bdd58',
@@ -89,10 +92,20 @@ export default {
       this.currentSticker = null
       this.erase = false
     },
+    onEraseClick (index) {
+      this.currentColor = null
+      this.currentSticker = null
+      this.erase = true
+    },
     onStickerClick (index) {
       this.currentColor = null
       this.currentSticker = index
       this.erase = false
+    },
+    onSnapshotClick () {
+      this.$refs.vicImage.snapshot().then(thumbnail => {
+        this.thumbnailSrc = thumbnail
+      })
     }
   },
   mounted () {
@@ -113,6 +126,10 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  display: flex;
+  flex-direction: column;
+  top: 0;
+  bottom: 0;
 }
 
 .vic-image {
@@ -143,5 +160,18 @@ html, body {
 
 .eraser {
   border: solid 0.5px black;
+}
+
+.snapshot {
+  margin-top: 2vh;
+}
+
+.thumbnail {
+  margin: 12px;
+  border: solid 1px black;
+  flex-grow: 1;
+  object-fit: contain;
+  width: 80vw;
+  align-self: center;
 }
 </style>

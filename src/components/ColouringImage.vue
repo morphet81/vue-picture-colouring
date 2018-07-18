@@ -149,20 +149,20 @@
                         this.stickerWidth,
                         this.stickerHeight
                     )
+                    ctx.restore()
 
                     // Make sure the sticker does appear on pixels that are originally transparent
                     var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
 
                     // Use diagonal for the "checked rectangle" around the refernce point as the sticker can have a rotation
-                    let diag = Math.ceil(Math.sqrt(this.stickerWidth*this.stickerWidth + this.stickerHeight*this.stickerHeight))
-                    for (var pixelX = x - diag / 2; pixelX < x + diag / 2 + 1; pixelX++) {
-                        for (var pixelY = y - diag / 2; pixelY < y + diag / 2 + 1; pixelY++) {
+                    let padding = Math.ceil(Math.sqrt(this.stickerWidth*this.stickerWidth + this.stickerHeight*this.stickerHeight) / 2)
+                    for (var pixelX = x - padding; pixelX < x + padding + 1; pixelX++) {
+                        for (var pixelY = y - padding; pixelY < y + padding + 1; pixelY++) {
                             let pos = (pixelY - 1) * this.canvas.width * 4 + pixelX * 4
                             imgData.data[pos+3] = this.originalPixels[pos+3]
                         }
                     }
                     ctx.putImageData(imgData, 0, 0)
-                    ctx.restore()
                 }
                 stickerImage.src = this.sticker
             },
@@ -200,7 +200,6 @@
                                 imgData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
                                 imgData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
                                 imgData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
-                                imgData[pos+3] = 0
 
                                 this.colouredPixels[pos/4] = this.color
                             }

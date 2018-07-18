@@ -3,7 +3,7 @@
     <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
       :erase="erase" :tool-width="18" :width="width" :height="height" :src="mainLayers[currentMainLayer]"
       :bw-src="require('./assets/watch-sketch-example.png')" :sticker-width="stickerSize" :sticker-height="stickerSize"
-      :sub-layers="subLayers"></vpc-image>
+      :sub-layers="subLayers" :zoom-level="zoomLevel"></vpc-image>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
         <div class="color" :style="colorStyle(i)" @click="onColorClick(i)"></div>
@@ -44,6 +44,7 @@ export default {
       currentColor: 0,
       currentSticker: null,
       thumbnailSrc: null,
+      zoomLevel: 1.5,
       colors: [
         '#dd3b3b',
         '#3bdd58',
@@ -115,7 +116,6 @@ export default {
     },
     onSwitchMainLayerClick () {
       this.currentMainLayer = this.currentMainLayer == 0 ? 1 : 0
-      this.$refs.vicImage.replaceMainLayer(this.mainLayers[this.currentMainLayer])
     },
     onSnapshotClick () {
       this.$refs.vicImage.snapshot().then(thumbnail => {
@@ -149,7 +149,10 @@ html, body {
 }
 
 .vic-image {
-  width: 100vw;
+  margin-top: 4vh;
+  margin-left: 10vw;
+  width: 80vw;
+  border: solid 1px red;
 }
 
 .colors {
@@ -192,7 +195,7 @@ html, body {
   border: solid 1px black;
   flex-grow: 1;
   object-fit: contain;
-  width: 80vw;
-  align-self: center;
+  width: 30vw;
+  margin-left: 35vw;
 }
 </style>

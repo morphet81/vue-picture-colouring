@@ -2,6 +2,8 @@
 
 This library is intenteded for colouring and stick stickers on pictures. When you color parts of your image that are transparent, the transparency information is kept so that you can colourize objects without going beyond their limits. Also works for stickers: if you try to put a sticker in a transparent area, it will not appear.
 
+You can change the main layer image without overwriting the colouring that has been made until then.
+
 **WARNING** For now this library is made only for mobile phones and touch events. Will evolve later.
 
 ## Installation
@@ -62,8 +64,8 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 |------------|---------------------------------------------------------------------------------------------------------------------------------------|-----------|
 |src    |The main layer image, the one you will be able to colour and put stickers on|null|
 |bw-src|The black and white version of the main layer image. This allow to colourize nicely without colours stacking each others|null|
-|width|The width of the canvas|640|
-|height|The height of the canvas|480|
+|width|The width of the canvas<br>*Deprecated: Now uses the dimensions given to the component*|640|
+|height|The height of the canvas<br>*Deprecated: Now uses the dimensions given to the component*|480|
 |color|The color that is applied by the tool on the picture|'#dd3b3b'|
 |tool-width|Painting tool width|18|
 |sticker|The source URL of the sticker that is stuck on the picture|null|
@@ -71,6 +73,7 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 |sticker-height|The height of the sticker|32|
 |erase|Indicates if the tool is in erase mode|false|
 |sub-layers|Images source URLs for elements to be displayed below the main layer. It is not possible to colour it but it will appear in the snapshot|[]|
+|zoom-level|Initial zoom level to be applied to the scene|1|
 
 ### *Licensing*
  *The icons used as stickers for the demo have been made by Freepik and were taken from [Flaticon website](https://www.flaticon.com/)*

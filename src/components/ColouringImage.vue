@@ -1,10 +1,15 @@
 <template>
-    <div>
+    <div ref="vpcImage" class="vpc-image">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
-        <img class="sublayer" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer" :id="`subLayer${i}`"/>
+        <!-- <img class="sublayer" :style="subLayerStyle" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer" :id="`subLayer${i}`"/> -->
+        
+        
+        <div class="sublayerContainer" :style="layerStyle" v-for="(subLayer, i) in subLayers" :key="i">
+            <img class="sublayer" :style="subLayerStyle" :src="subLayer" :id="`subLayer${i}`"/>
+        </div>
 
         <!-- Main drawing canvas -->
-        <canvas ref="canvas" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
+        <canvas ref="canvas" :style="layerStyle" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
 
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
         <canvas ref="utilCanvas" :width="width" :height="height" v-show="false"></canvas>
@@ -18,13 +23,18 @@
         name: 'colouring-image',
         data () {
             return {
+                width: 0,
+                height: 0,
+                top: 0,
+                left: 0,
                 image: null,
                 bwImage: null,
                 canvasBoundingClientRect: null,
                 originalPixels: [],
                 referencePixels: [],        // Will be used to colourize the picture, can be the black and white version if given
                 colouredPixels: [],
-                startY: 0
+                startY: 0,
+                appliedZoom: 1
             }
         },
         computed: {
@@ -33,6 +43,21 @@
             },
             utilCanvas () {
                 return this.$refs.utilCanvas
+            },
+            subLayerStyle () {
+                return {
+                    'width': `${this.width}px`,
+                    'height': `${this.height}px`,
+                    'transform': `scale(${this.appliedZoom})`
+                }
+            },
+            layerStyle () {
+                return {
+                    'width': `${this.width}px`,
+                    'height': `${this.height}px`,
+                    'top': `${this.top}px`,
+                    'left': `${this.left}px`,
+                }
             }
         },
         props: {
@@ -41,14 +66,6 @@
             },
             bwSrc: {
                 type: String
-            },
-            width: {
-                type: Number,
-                default: 640
-            },
-            height: {
-                type: Number,
-                default: 480
             },
             color: {
                 type: String,
@@ -79,6 +96,10 @@
                 default: () => {
                     return []
                 }
+            },
+            zoomLevel: {
+                type: Number,
+                default: 1
             }
         },
         methods: {
@@ -87,6 +108,11 @@
                     x: Math.round(x - this.canvasBoundingClientRect.left * (canvas.width  / this.canvasBoundingClientRect.width)),
                     y: Math.round(y - this.canvasBoundingClientRect.top  * (canvas.height / this.canvasBoundingClientRect.height))
                 };
+            },
+            applyTransformations (ctx) {
+                ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
+                ctx.scale(this.appliedZoom, this.appliedZoom)
+                ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2)
             },
             getPixels (canvas) {
                 let ctx = canvas.getContext('2d')
@@ -106,7 +132,17 @@
             },
             init () {
                 let ctx = this.canvas.getContext('2d')
+
+                // Ensure the canvas is empty
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+                // Apply initial transformation if needed
+                ctx.save()
+                this.applyTransformations(ctx)
+
+                // Draw the main layer
                 ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height)
+                ctx.restore()
 
                 // Init an array to keep in memory what color was used on each pixel
                 this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
@@ -117,7 +153,10 @@
                 // Get black and white image pixels if there is one
                 if (this.bwSrc) {
                     let ctx = this.utilCanvas.getContext('2d')
+                    ctx.save()
+                    this.applyTransformations(ctx)
                     ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
+                    ctx.restore()
                     this.referencePixels = this.getPixels(this.utilCanvas)
                 } else {
                     this.referencePixels = this.originalPixels
@@ -206,7 +245,88 @@
                 }
                 ctx.putImageData(imgData, 0, 0)
             },
-            replaceMainLayer (newLayerSrc) {
+            snapshotCanvas (drawSublayers) {
+                return new Promise((resolve, reject) => {
+                    let that = this
+                    let ctx = this.utilCanvas.getContext('2d')
+
+                    // Ensure nothing remains in the canvas
+                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+                    // Draw sub layers if required
+                    ctx.save()
+                    this.applyTransformations(ctx)
+                    if (drawSublayers) {
+                        for (var i = 0; i < this.subLayers.length; i++) {
+                            ctx.drawImage(document.getElementById(`subLayer${i}`), 0, 0, this.canvas.width, this.canvas.height)
+                        }
+                    }
+                    ctx.restore()
+
+                    // Draw main layer
+                    var mainLayer = new Image()
+                    mainLayer.onload = () => {
+                        ctx.drawImage(mainLayer, 0, 0, that.canvas.width, that.canvas.height)
+                        mainLayer = null
+                        resolve(this.utilCanvas.toDataURL())
+                    }
+                    mainLayer.onerror = () => {
+                        reject()
+                    }
+                    mainLayer.src = this.canvas.toDataURL()
+                })
+            },
+            snapshot () {
+                return this.snapshotCanvas(true)
+            },
+            onClick (e) {
+                var loc = this.windowToCanvas(this.canvas, e.clientX, e.clientY)
+                this.draw(loc.x, loc.y)
+            },
+            onTouchStart () {
+                // On Safari, the canvas bounding box will change as touch goes, so we have to ensure to always
+                // use the same throughout all the move process
+                this.canvasBoundingClientRect = this.canvas.getBoundingClientRect()
+            },
+            onSwipe (e) {
+                if (this.sticker) {
+                    return
+                }
+
+                var loc = this.windowToCanvas(this.canvas, e.touches[0].clientX, e.touches[0].clientY)
+                this.paint(loc.x, loc.y)
+            }
+        },
+        mounted () {
+            let that = this
+
+            // Setup the applied zoom level and forbid modify it after init
+            this.appliedZoom = this.zoomLevel
+
+            // Get component bounding rect values
+            this.width = Math.round(this.$refs.vpcImage.getBoundingClientRect().width)
+            this.height = Math.round(this.$refs.vpcImage.getBoundingClientRect().height)
+            this.top = Math.round(this.$refs.vpcImage.getBoundingClientRect().top)
+            this.left = Math.round(this.$refs.vpcImage.getBoundingClientRect().left)
+
+            // Load the main image
+            this.image = new Image()
+            this.image.onload = () => {
+                // If the black and white version is given, also load it
+                if (that.bwSrc) {
+                    that.bwImage = new Image()
+                    that.bwImage.onload = () => {
+                        that.init()
+                    }
+                    that.bwImage.src = this.bwSrc
+                } else {
+                    that.init()
+                }
+            }
+            this.image.src = this.src
+        },
+        watch: {
+            src () {
                 let that = this
                 var image = new Image()
                 image.onload = () => {
@@ -237,77 +357,27 @@
                     }
                     ctx.putImageData(newLayerData, 0, 0)
                 }
-                image.src = newLayerSrc
-            },
-            snapshot () {
-                return new Promise((resolve, reject) => {
-                    let that = this
-                    let ctx = this.utilCanvas.getContext('2d')
-
-                    // Ensure nothing remains in the canvas
-                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-
-                    // Draw sub layers
-                    for (var i = 0; i < this.subLayers.length; i++) {
-                        ctx.drawImage(document.getElementById(`subLayer${i}`), 0, 0, this.canvas.width, this.canvas.height)
-                    }
-
-                    // Draw main layer
-                    var mainLayer = new Image()
-                    mainLayer.onload = () => {
-                        ctx.drawImage(mainLayer, 0, 0, that.canvas.width, that.canvas.height)
-                        mainLayer = null
-                        resolve(this.utilCanvas.toDataURL())
-                    }
-                    mainLayer.onerror = () => {
-                        reject()
-                    }
-                    mainLayer.src = this.canvas.toDataURL()
-                })
-            },
-            onClick (e) {
-                var loc = this.windowToCanvas(this.canvas, e.clientX, e.clientY)
-                this.draw(loc.x, loc.y)
-            },
-            onTouchStart () {
-                // On Safari, the canvas bounding box will change as touch goes, so we have to ensure to always
-                // use the same throughout all the move process
-                this.canvasBoundingClientRect = this.canvas.getBoundingClientRect()
-            },
-            onSwipe (e) {
-                if (this.sticker) {
-                    return
-                }
-
-                var loc = this.windowToCanvas(this.canvas, e.touches[0].clientX, e.touches[0].clientY)
-                this.paint(loc.x, loc.y)
+                image.src = this.src
             }
-        },
-        mounted () {
-            let that = this
-
-            // Load the main image
-            this.image = new Image()
-            this.image.onload = () => {
-                // If the black and white version is given, also load it
-                if (that.bwSrc) {
-                    that.bwImage = new Image()
-                    that.bwImage.onload = () => {
-                        that.init()
-                    }
-                    that.bwImage.src = this.bwSrc
-                } else {
-                    that.init()
-                }
-            }
-            this.image.src = this.src
         }
     }
 </script>
 
 <style scoped>
 
-    canvas, .sublayer {
+    .vpc-image {
+        overflow: hidden;   
+    }
+
+    .sublayerContainer {
+        position: absolute;
+        overflow: hidden;
+        top: 0;
+        left: 0;
+        right: 0;
+    }
+
+    canvas {
         position: absolute;
         top: 0;
         left: 0;

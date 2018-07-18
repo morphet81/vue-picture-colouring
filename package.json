@@ -1,6 +1,6 @@
 {
   "name": "vue-picture-colouring",
-  "version": "0.1.1",
+  "version": "0.1.7",
   "license": "MIT",
   "keywords": ["vue", "drawing", "colouring", "stickers"],
   "main": "./dist/vue-picture-colouring.common.js",

@@ -2,6 +2,9 @@
     <div>
         <canvas ref="canvas" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
 
+        <!-- Hidden canvas used at init for getting black and white image pixels -->
+        <canvas ref="bwCanvas" :width="width" :height="height" v-show="false"></canvas>
+
         <!-- This will be used for showing the tool on non mobile devices -->
         <!-- <canvas ref="overlay" :width="width" :height="height" @click="onClick" @touchmove="onSwipe"></canvas> -->
     </div>
@@ -17,8 +20,10 @@
         data () {
             return {
                 image: null,
+                bwImage: null,
                 canvasBoundingClientRect: null,
                 originalPixels: [],
+                referencePixels: [],        // Will be used to colourize the picture, can be the black and white version if given
                 colouredPixels: [],
                 startY: 0
             }
@@ -30,6 +35,9 @@
         },
         props: {
             src: {
+                type: String
+            },
+            bwSrc: {
                 type: String
             },
             width: {
@@ -66,11 +74,27 @@
             }
         },
         methods: {
-            windowToCanvas(canvas, x, y) {
+            windowToCanvas (canvas, x, y) {
                 return {
-                    x: x - this.canvasBoundingClientRect.left * (canvas.width  / this.canvasBoundingClientRect.width),
-                    y: y - this.canvasBoundingClientRect.top  * (canvas.height / this.canvasBoundingClientRect.height)
+                    x: Math.round(x - this.canvasBoundingClientRect.left * (canvas.width  / this.canvasBoundingClientRect.width)),
+                    y: Math.round(y - this.canvasBoundingClientRect.top  * (canvas.height / this.canvasBoundingClientRect.height))
                 };
+            },
+            getPixels (canvas) {
+                let ctx = canvas.getContext('2d')
+
+                var pixels = new Array(this.canvas.width * this.canvas.height * 4)
+                var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+
+                // Get all pixels information
+                for (var i = 0; i < imgData.data.length; i += 4) {
+                    pixels[i] = imgData.data[i]
+                    pixels[i+1] = imgData.data[i+1]
+                    pixels[i+2] = imgData.data[i+2]
+                    pixels[i+3] = imgData.data[i+3]
+                }
+
+                return pixels
             },
             init () {
                 let ctx = this.canvas.getContext('2d')
@@ -80,13 +104,15 @@
                 this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
 
                 // Keep an array of original pixels values
-                this.originalPixels = new Array(this.canvas.width * this.canvas.height * 4)
-                var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-                for (var i = 0; i < imgData.data.length; i += 4) {
-                    this.originalPixels[i] = imgData.data[i]
-                    this.originalPixels[i+1] = imgData.data[i+1]
-                    this.originalPixels[i+2] = imgData.data[i+2]
-                    this.originalPixels[i+3] = imgData.data[i+3]
+                this.originalPixels = this.getPixels(this.canvas)
+
+                // Get black and white image pixels if there is one
+                if (this.bwSrc) {
+                    let ctx = this.$refs.bwCanvas.getContext('2d')
+                    ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
+                    this.referencePixels = this.getPixels(this.$refs.bwCanvas)
+                } else {
+                    this.referencePixels = this.originalPixels
                 }
             },
             draw (x, y) {
@@ -161,9 +187,9 @@
                             }
                             // If the pixel is not yet coloured with the selected color, color it
                             else if (this.colouredPixels[pos / 4] !== this.color) {
-                                imgData.data[pos] = (this.originalPixels[pos] / 255) * color.red()
-                                imgData.data[pos+1] = (this.originalPixels[pos+1] / 255) * color.green()
-                                imgData.data[pos+2] = (this.originalPixels[pos+2] / 255) * color.blue()
+                                imgData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
+                                imgData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
+                                imgData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
                                 imgData[pos+3] = 0
 
                                 this.colouredPixels[pos/4] = this.color
@@ -183,6 +209,10 @@
                 this.canvasBoundingClientRect = this.canvas.getBoundingClientRect()
             },
             onSwipe (e) {
+                if (this.sticker) {
+                    return
+                }
+
                 var loc = this.windowToCanvas(this.canvas, e.touches[0].clientX, e.touches[0].clientY)
                 this.paint(loc.x, loc.y)
             }
@@ -191,8 +221,15 @@
             let that = this
             this.image = new Image()
             this.image.onload = () => {
-                that.init()
-                that.image.onload = null
+                if (that.bwSrc) {
+                    that.bwImage = new Image()
+                    that.bwImage.onload = () => {
+                        that.init()
+                    }
+                    that.bwImage.src = this.bwSrc
+                } else {
+                    that.init()
+                }
             }
             this.image.src = this.src
         }

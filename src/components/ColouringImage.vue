@@ -343,7 +343,10 @@
                     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
                     // We draw the new layer
+                    ctx.save()
+                    this.applyTransformations(ctx)
                     ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height)
+                    ctx.restore()
 
                     // Keep an array of original pixels values
                     this.originalPixels = this.getPixels(this.canvas)

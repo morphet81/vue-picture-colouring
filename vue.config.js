@@ -1,6 +1,9 @@
 module.exports = {
     devServer: {
-      disableHostCheck: true
+      disableHostCheck: true,
     },
-    css: { extract: false }
+
+    css: { 
+      extract: false 
+    },
   }

@@ -1,16 +1,15 @@
 <template>
     <div ref="vpcImage" class="vpc-image">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
-        <!-- <img class="sublayer" :style="subLayerStyle" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer" :id="`subLayer${i}`"/> -->
-        <div class="sublayerContainer" :style="layerStyle" v-for="(subLayer, i) in subLayers" :key="i">
+        <div class="sublayer-container" v-for="(subLayer, i) in subLayers" :key="i">
             <img class="sublayer" :style="subLayerStyle" :src="subLayer" :id="`subLayer${i}`"/>
         </div>
 
-        <!-- Main drawing canvas -->
-        <canvas ref="canvas" :style="layerStyle" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
-
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
-        <canvas ref="utilCanvas" :width="width" :height="height" v-show="false"></canvas>
+        <canvas id="rendering-canvas" ref="utilCanvas" :width="width" :height="height" v-show="false"></canvas>
+
+        <!-- Main drawing canvas -->
+        <canvas id="drawing-canvas" ref="canvas" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
     </div>
 </template>
 
@@ -44,19 +43,9 @@
             },
             subLayerStyle () {
                 return {
-                    'width': `${this.width}px`,
-                    'height': `${this.height}px`,
                     'transform': `scale(${this.appliedZoom})`
                 }
             },
-            layerStyle () {
-                return {
-                    'width': `${this.width}px`,
-                    'height': `${this.height}px`,
-                    'top': `${this.top}px`,
-                    'left': `${this.left}px`,
-                }
-            }
         },
         props: {
             src: {
@@ -367,15 +356,39 @@
 <style scoped>
 
     .vpc-image {
+        position: relative;
         overflow: hidden;   
     }
 
-    .sublayerContainer {
+    .sublayer-container {
         position: absolute;
         overflow: hidden;
         top: 0;
         left: 0;
         right: 0;
+        bottom: 0;
+        z-index: 0;
+    }
+
+    .sublayer {
+        width: 100%;
+        height: 100%;
+    }
+
+    #rendering-canvas {
+        z-index: 0;
+    }
+
+    #drawing-canvas {
+        z-index: 1;
+    }
+
+    canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
     }
 
 </style>

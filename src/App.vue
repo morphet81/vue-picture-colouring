@@ -1,9 +1,11 @@
 <template>
   <div id="app">
-    <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
+    <div class="drawing-container">
+      <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
       :erase="erase" :tool-width="18" :src="mainLayers[currentMainLayer]"
       :bw-src="require('./assets/watch-sketch-example.png')" :sticker-width="stickerSize" :sticker-height="stickerSize"
       :sub-layers="subLayers" :zoom-level="zoomLevel"></vpc-image>
+    </div>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
         <div class="color" :style="colorStyle(i)" @click="onColorClick(i)"></div>
@@ -78,7 +80,7 @@ export default {
   computed: {
     imageStyle () {
       return {
-        'height': `${this.height}px`
+        // 'height': `${this.height}px`
       }
     },
     eraserStyle () {
@@ -148,10 +150,18 @@ html, body {
   bottom: 0;
 }
 
+.drawing-container {
+  display: flex;
+  justify-content: center;
+  width: 100vw;
+  height: 40vh;
+  margin: 4vh 0 4vh 0;
+}
+
 .vic-image {
-  margin-top: 4vh;
   margin-left: 10vw;
-  width: 80vw;
+  width: 40vh;
+  height: 40vh;
   border: solid 1px red;
 }
 

@@ -2,8 +2,6 @@
     <div ref="vpcImage" class="vpc-image">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
         <!-- <img class="sublayer" :style="subLayerStyle" :width="width" :height="height" v-for="(subLayer, i) in subLayers" :key="i" :src="subLayer" :id="`subLayer${i}`"/> -->
-        
-        
         <div class="sublayerContainer" :style="layerStyle" v-for="(subLayer, i) in subLayers" :key="i">
             <img class="sublayer" :style="subLayerStyle" :src="subLayer" :id="`subLayer${i}`"/>
         </div>
@@ -361,7 +359,7 @@
                     ctx.putImageData(newLayerData, 0, 0)
                 }
                 image.src = this.src
-            }
+            },
         }
     }
 </script>
@@ -378,14 +376,6 @@
         top: 0;
         left: 0;
         right: 0;
-    }
-
-    canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
     }
 
 </style>

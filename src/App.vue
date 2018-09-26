@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
-      :erase="erase" :tool-width="18" :width="width" :height="height" :src="mainLayers[currentMainLayer]"
+      :erase="erase" :tool-width="18" :src="mainLayers[currentMainLayer]"
       :bw-src="require('./assets/watch-sketch-example.png')" :sticker-width="stickerSize" :sticker-height="stickerSize"
       :sub-layers="subLayers" :zoom-level="zoomLevel"></vpc-image>
     <div class="colors">

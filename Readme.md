@@ -63,7 +63,7 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 |Property   |Role                                                                                                                                   |Default    |
 |------------|---------------------------------------------------------------------------------------------------------------------------------------|-----------|
 |src    |The main layer image, the one you will be able to colour and put stickers on|null|
-|bw-src|The black and white version of the main layer image. This allow to colourize nicely without colours stacking each others|null|
+|bw-src|The black and white version of the main layer image. This allow to colourize nicely without colours stacking above each others. This is useless if your main src is already black and white.|null|
 |width|The width of the canvas<br>*Deprecated: Now uses the dimensions given to the component*|640|
 |height|The height of the canvas<br>*Deprecated: Now uses the dimensions given to the component*|480|
 |color|The color that is applied by the tool on the picture|'#dd3b3b'|

@@ -137,7 +137,7 @@
                 // Keep an array of original pixels values
                 this.originalPixels = this.getPixels(this.canvas)
 
-                // Get black and white image pixels if there is one
+                // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
                 if (this.bwSrc) {
                     let ctx = this.utilCanvas.getContext('2d')
                     ctx.save()

@@ -4,7 +4,7 @@
       <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
       :erase="erase" :tool-width="toolWidth" :src="mainLayers[currentMainLayer]"
       :bw-src="require('./assets/watch-sketch-example.png')" :sticker-width="stickerSize" :sticker-height="stickerSize"
-      :sub-layers="subLayers" :zoom-level="zoomLevel"></vpc-image>
+      :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="90"></vpc-image>
     </div>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">

@@ -74,6 +74,7 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 |erase|Indicates if the tool is in erase mode|false|
 |sub-layers|Images source URLs for elements to be displayed below the main layer. It is not possible to colour it but it will appear in the snapshot|[]|
 |zoom-level|Initial zoom level to be applied to the scene|1|
+|rotation|Initial angle in degrees to be applied to the scene|0|
 
 ### *Licensing*
  *The icons used as stickers for the demo have been made by Freepik and were taken from [Flaticon website](https://www.flaticon.com/)*

@@ -43,7 +43,7 @@
             },
             subLayerStyle () {
                 return {
-                    'transform': `scale(${this.appliedZoom})`
+                    'transform': `scale(${this.appliedZoom}) rotate(${this.rotation}deg)`
                 }
             },
         },
@@ -87,7 +87,11 @@
             zoomLevel: {
                 type: Number,
                 default: 1
-            }
+            },
+            rotation: {
+                type: Number,
+                default: 0
+            },
         },
         methods: {
             windowToCanvas (canvas, x, y) {
@@ -99,6 +103,7 @@
             applyTransformations (ctx) {
                 ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
                 ctx.scale(this.appliedZoom, this.appliedZoom)
+                ctx.rotate(this.rotation * Math.PI / 180)
                 ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2)
             },
             getPixels (canvas) {

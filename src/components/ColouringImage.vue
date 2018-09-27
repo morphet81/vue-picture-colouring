@@ -206,11 +206,12 @@
                 var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
                 
                 // Check all pixels to colorize those which need
-                for (var pixelX = x - this.toolWidth / 2; pixelX < x + this.toolWidth / 2 + 1; pixelX++) {
-                    for (var pixelY = y - this.toolWidth / 2; pixelY < y + this.toolWidth / 2 + 1; pixelY++) {
+                let toolRadius = Math.round(this.toolWidth / 2)
+                for (var pixelX = x - toolRadius; pixelX < x + toolRadius + 1; pixelX++) {
+                    for (var pixelY = y - toolRadius; pixelY < y + toolRadius + 1; pixelY++) {
                         let pos = (pixelY - 1) * this.canvas.width * 4 + pixelX * 4
 
-                        if (distanceToPoint(pixelX, pixelY) <= this.toolWidth / 2) {
+                        if (distanceToPoint(pixelX, pixelY) <= toolRadius) {
                             // If we want to erase
                             if (this.erase) {
                                 imgData.data[pos] = this.originalPixels[pos]

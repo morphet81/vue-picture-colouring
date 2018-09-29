@@ -6,7 +6,10 @@
         </div>
 
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
-        <canvas id="rendering-canvas" ref="utilCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
+        <canvas class="rendering-canvas" ref="utilCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
+
+        <!-- Hidden canvas used between maing layer switching -->
+        <canvas class="rendering-canvas" ref="tmpCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
 
         <!-- Main drawing canvas -->
         <canvas id="drawing-canvas" ref="canvas" :style="canvasStyle" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
@@ -48,6 +51,10 @@
 
             utilCanvas () {
                 return this.$refs.utilCanvas
+            },
+
+            tmpCanvas () {
+                return this.$refs.tmpCanvas
             },
 
             subLayerStyle () {
@@ -197,41 +204,65 @@
                 return pixels
             },
 
+            /**
+             * Register the reference pixels. This is either the original main layer's pixels (if black and white) or its
+             * black and white version given by bw-src prop. We need to do it a promise to ensure the bw-src image is
+             * loaded before doing anything.
+             */
             registerReferencePixels () {
-                if (this.bwSrc) {
-                    let ctx = this.utilCanvas.getContext('2d')
-                    ctx.save()
-                    this.applyTransformations(ctx)
-                    ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
-                    ctx.restore()
-                    this.referencePixels = this.getPixels(this.utilCanvas)
-                } else {
-                    this.referencePixels = this.originalPixels
-                }
+                return new Promise ((resolve, reject) => {
+                    if (this.bwSrc) {
+                        this.bwImage = new Image()
+                        this.bwImage.onload = () => {
+                            let ctx = this.utilCanvas.getContext('2d')
+                            ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+                            ctx.save()
+                            this.applyTransformations(ctx)
+                            ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
+                            ctx.restore()
+                            this.referencePixels = this.getPixels(this.utilCanvas)
+                            resolve()
+                        }
+                        this.bwImage.onerror = reject
+                        this.bwImage.src = this.bwSrc
+                    } else {
+                        this.referencePixels = this.originalPixels
+                        resolve()
+                    }
+                })
             },
 
             init () {
-                let ctx = this.canvas.getContext('2d')
-
-                // Ensure the canvas is empty
-                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-
-                // Apply initial transformation if needed
-                ctx.save()
-                this.applyTransformations(ctx)
-
-                // Draw the main layer
-                ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height)
-                ctx.restore()
-
-                // Init an array to keep in memory what color was used on each pixel
-                this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
-
-                // Keep an array of original pixels values
-                this.originalPixels = this.getPixels(this.canvas)
-
-                // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
-                this.registerReferencePixels()
+                // Load the main layer image
+                this.image = new Image()
+                this.image.onload = () => {
+                    let ctx = this.tmpCanvas.getContext('2d')
+    
+                    // Ensure the canvas is empty
+                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    
+                    // Apply initial transformation if needed
+                    ctx.save()
+                    this.applyTransformations(ctx)
+    
+                    // Draw the main layer
+                    ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height)
+                    ctx.restore()
+    
+                    // Init an array to keep in memory what color was used on each pixel
+                    this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
+    
+                    // Keep an array of original pixels values
+                    this.originalPixels = this.getPixels(this.tmpCanvas)
+    
+                    // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
+                    this.registerReferencePixels()
+                        .then(() => {
+                            let mainCtx = this.canvas.getContext('2d')
+                            mainCtx.putImageData(ctx.getImageData(0, 0, this.canvas.width, this.canvas.height), 0, 0)
+                        })
+                }
+                this.image.src = this.src
             },
 
             draw (x, y) {
@@ -417,28 +448,17 @@
             this.top = Math.round(this.$refs.vpcImage.getBoundingClientRect().top)
             this.left = Math.round(this.$refs.vpcImage.getBoundingClientRect().left)
 
-            // Load the main image
-            this.image = new Image()
-            this.image.onload = () => {
-                // If the black and white version is given, also load it
-                if (this.bwSrc) {
-                    this.bwImage = new Image()
-                    this.bwImage.onload = () => {
-                        this.init()
-                    }
-                    this.bwImage.src = this.bwSrc
-                } else {
-                    this.init()
-                }
-            }
-            this.image.src = this.src
+            // Init the drawing
+            this.init()
         },
         watch: {
             src () {
-                let that = this
+                // Emit a refresh start event
+                this.$emit('refresh-start')
+
                 var image = new Image()
                 image.onload = () => {
-                    let ctx = that.canvas.getContext('2d')
+                    let ctx = this.tmpCanvas.getContext('2d')
 
                     // First we need to clear the canvas
                     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
@@ -450,39 +470,46 @@
                     ctx.restore()
 
                     // Keep an array of original pixels values
-                    this.originalPixels = this.getPixels(this.canvas)
+                    this.originalPixels = this.getPixels(this.tmpCanvas)
 
                     // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
                     this.registerReferencePixels()
-
-                    // Then we put back pixels values that were on the canvas but not on the former main layer
-                    var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-                    for (var i = 0; i < this.colouredPixels.length; i++) {
-                        // If current pixel is not colored, continue
-                        if (!this.colouredPixels[i]) {
-                            continue
-                        }
-
-                        let currentColor = this.colouredPixels[i]
-
-                        // Get pixel position
-                        let pos = i * 4
-
-                        // Paint pixel
-                        if (!this.colouredPixels[i].sticker) {
-                            newLayerData.data[pos] = (this.referencePixels[pos] / 255) * currentColor.red
-                            newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * currentColor.green
-                            newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * currentColor.blue
-                            newLayerData.data[pos+3] = this.referencePixels[pos+3]
-                        } else {
-                            if (currentColor.alpha > 0) {
-                                newLayerData.data[pos] = currentColor.red
-                                newLayerData.data[pos+1] = currentColor.green
-                                newLayerData.data[pos+2] = currentColor.blue
+                        .then(() => {
+                            // Then we put back pixels values that were on the canvas but not on the former main layer
+                            var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+                            for (var i = 0; i < this.colouredPixels.length; i++) {
+                                // If current pixel is not colored, continue
+                                if (!this.colouredPixels[i]) {
+                                    continue
+                                }
+        
+                                let currentColor = this.colouredPixels[i]
+        
+                                // Get pixel position
+                                let pos = i * 4
+        
+                                // Paint pixel
+                                if (!this.colouredPixels[i].sticker) {
+                                    newLayerData.data[pos] = (this.referencePixels[pos] / 255) * currentColor.red
+                                    newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * currentColor.green
+                                    newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * currentColor.blue
+                                    newLayerData.data[pos+3] = this.referencePixels[pos+3]
+                                } else {
+                                    if (currentColor.alpha > 0) {
+                                        newLayerData.data[pos] = currentColor.red
+                                        newLayerData.data[pos+1] = currentColor.green
+                                        newLayerData.data[pos+2] = currentColor.blue
+                                    }
+                                }
                             }
-                        }
-                    }
-                    ctx.putImageData(newLayerData, 0, 0)
+
+                            // Apply image data to the main canvas
+                            let mainCtx = this.canvas.getContext('2d')
+                            mainCtx.putImageData(newLayerData, 0, 0)
+
+                            // Emit a refresh end event
+                            this.$emit('refresh-end')
+                        })
                 }
                 image.src = this.src
             },
@@ -512,7 +539,7 @@
         height: 100%;
     }
 
-    #rendering-canvas {
+    .rendering-canvas {
         z-index: 0;
     }
 

@@ -4,7 +4,9 @@
       <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
         :erase="erase" :tool-width="toolWidth" :src="mainLayers[currentMainLayer]"
         :sticker-width="stickerSize" :sticker-height="stickerSize"
-        :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="45"></vpc-image>
+        :bw-src="mainLayersBw[currentMainLayer]"
+        :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="45"
+        @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd"></vpc-image>
     </div>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
@@ -58,6 +60,10 @@ export default {
         require('./assets/case-3.png'),
         require('./assets/case-4.png')
       ],
+      mainLayersBw: [
+        require('./assets/case-3-bw.png'),
+        require('./assets/case-4-bw.png')
+      ],
       subLayers: [
         // require('./assets/wrist.png'),
         // require('./assets/face.png'),
@@ -102,29 +108,42 @@ export default {
         'background-color': this.currentSticker && this.currentSticker == index ? 'blue' : '',
       }
     },
+
     onColorClick (index) {
       this.currentColor = index
       this.currentSticker = null
       this.erase = false
     },
+
     onEraseClick () {
       this.currentColor = null
       this.currentSticker = null
       this.erase = true
     },
+
     onStickerClick (index) {
       this.currentColor = null
       this.currentSticker = index
       this.erase = false
     },
+
     onSwitchMainLayerClick () {
       this.currentMainLayer = this.currentMainLayer == 0 ? 1 : 0
     },
+
     onSnapshotClick () {
       this.$refs.vicImage.snapshot().then(thumbnail => {
         this.thumbnailSrc = thumbnail
       })
-    }
+    },
+
+    onRefreshStart () {
+      // console.log("start")
+    },
+
+    onRefreshEnd () {
+      // console.log("end")
+    },
   },
 
   components: {

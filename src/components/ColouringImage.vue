@@ -6,10 +6,10 @@
         </div>
 
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
-        <canvas id="rendering-canvas" ref="utilCanvas" :width="width" :height="height" v-show="false"></canvas>
+        <canvas id="rendering-canvas" ref="utilCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
 
         <!-- Main drawing canvas -->
-        <canvas id="drawing-canvas" ref="canvas" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
+        <canvas id="drawing-canvas" ref="canvas" :style="canvasStyle" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
     </div>
 </template>
 
@@ -35,77 +35,151 @@
             }
         },
         computed: {
+            canvasStyle () {
+                return {
+                    'transform-origin': '0% 0%',
+                    'transform': `scale(${1 / this.canvasRatio})`,
+                }
+            },
+
             canvas () {
                 return this.$refs.canvas
             },
+
             utilCanvas () {
                 return this.$refs.utilCanvas
             },
+
             subLayerStyle () {
                 return {
                     'transform': `scale(${this.appliedZoom}) rotate(${this.rotation}deg)`
                 }
             },
+
+            normalizedToolWidth () {
+                return this.canvasRatio * this.toolWidth
+            },
+
+            normalizedStickerWidth () {
+                return this.canvasRatio * this.stickerWidth
+            },
+
+            normalizedStickerHeight () {
+                return this.canvasRatio * this.stickerHeight
+            },
         },
         props: {
+            /**
+             * The main layer image. This layer will be coloured
+             */
             src: {
                 type: String
             },
+
+            /**
+             * Black and white version of the main layer, required if main layer is coloured
+             */
             bwSrc: {
                 type: String
             },
+
+            /**
+             * Tool color
+             */
             color: {
                 type: String,
                 default: '#dd3b3b'
             },
+
+            /**
+             * Sticker src
+             */
             sticker: {
                 type: String,
                 default: null
             },
+
+            /**
+             * Enable/disable eraser
+             */
             erase: {
                 type: Boolean,
                 default: false
             },
+
+            /**
+             * Tool size
+             */
             toolWidth: {
                 type: Number,
                 default: 18
             },
+
+            /** 
+             * Sticker width
+             */
             stickerWidth: {
                 type: Number,
                 default: 32
             },
+
+            /** 
+             * Sticker height
+             */
             stickerHeight: {
                 type: Number,
                 default: 32
             },
+
+            /**
+             * List of src that will be displayed behind the main layer. These layers will not be colored.
+             */
             subLayers: {
                 type: Array,
                 default: () => {
                     return []
                 }
             },
+
+            /**
+             * Applied zoom level
+             */
             zoomLevel: {
                 type: Number,
                 default: 1
             },
+
+            /**
+             * Applied rotation
+             */
             rotation: {
                 type: Number,
                 default: 0
             },
+
+            /**
+             * Scale factor for the canvas
+             */
+            canvasRatio: {
+                type: Number,
+                default: 2,
+            }
         },
         methods: {
             windowToCanvas (canvas, x, y) {
                 return {
-                    x: Math.round(x - this.canvasBoundingClientRect.left * (canvas.width  / this.canvasBoundingClientRect.width)),
-                    y: Math.round(y - this.canvasBoundingClientRect.top  * (canvas.height / this.canvasBoundingClientRect.height))
+                    x: Math.round(x * this.canvasRatio - this.canvasBoundingClientRect.left * (canvas.width  / this.canvasBoundingClientRect.width)),
+                    y: Math.round(y * this.canvasRatio - this.canvasBoundingClientRect.top  * (canvas.height / this.canvasBoundingClientRect.height))
                 };
             },
+
             applyTransformations (ctx) {
                 ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
                 ctx.scale(this.appliedZoom, this.appliedZoom)
                 ctx.rotate(this.rotation * Math.PI / 180)
                 ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2)
             },
+            
             getPixels (canvas) {
                 let ctx = canvas.getContext('2d')
 
@@ -178,10 +252,10 @@
                     // Draw the sticker
                     ctx.drawImage(
                         stickerImage,
-                        -this.stickerWidth / 2,
-                        -this.stickerHeight / 2,
-                        this.stickerWidth,
-                        this.stickerHeight
+                        -this.normalizedStickerWidth / 2,
+                        -this.normalizedStickerHeight / 2,
+                        this.normalizedStickerWidth,
+                        this.normalizedStickerHeight
                     )
                     ctx.restore()
 
@@ -189,7 +263,7 @@
                     var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
 
                     // Use diagonal for the "checked rectangle" around the reference point as the sticker can have a rotation
-                    let padding = Math.ceil(Math.sqrt(this.stickerWidth * this.stickerWidth + this.stickerHeight * this.stickerHeight) / 2)
+                    let padding = Math.ceil(Math.sqrt(this.normalizedStickerWidth * this.normalizedStickerWidth + this.normalizedStickerHeight * this.normalizedStickerHeight) / 2)
                     for (var pixelX = x - padding; pixelX < x + padding + 1; pixelX++) {
                         for (var pixelY = y - padding; pixelY < y + padding + 1; pixelY++) {
                             let pos = (pixelY - 1) * this.canvas.width * 4 + pixelX * 4
@@ -197,7 +271,10 @@
 
                             if (this.originalPixels[pos+3] > 0) {
                                 this.colouredPixels[pos/4] = {
-                                    color: Color.rgb(imgData.data[pos], imgData.data[pos+1], imgData.data[pos+2]),
+                                    red: imgData.data[pos], 
+                                    green: imgData.data[pos+1], 
+                                    blue: imgData.data[pos+2],
+                                    alpha: imgData.data[pos+3],
                                     sticker: true,
                                 }
                             }
@@ -210,6 +287,9 @@
             paint (x, y) {
                 let ctx = this.canvas.getContext('2d')
                 let color = Color(this.color)
+                let red = color.red()
+                let green = color.green()
+                let blue = color.blue()
 
                 // Give the distance of the given pixel with the touched pixel
                 let distanceToPoint = (x2, y2) => {
@@ -223,7 +303,7 @@
                 var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
                 
                 // Check all pixels to colorize those which need
-                let toolRadius = Math.round(this.toolWidth / 2)
+                let toolRadius = Math.round(this.normalizedToolWidth / 2)
                 for (var pixelX = x - toolRadius; pixelX < x + toolRadius + 1; pixelX++) {
                     for (var pixelY = y - toolRadius; pixelY < y + toolRadius + 1; pixelY++) {
                         let pos = (pixelY - 1) * this.canvas.width * 4 + pixelX * 4
@@ -238,13 +318,16 @@
                                 this.colouredPixels[pos/4] = null
                             }
                             // If the pixel is not yet coloured with the selected color, color it
-                            else if (this.colouredPixels[pos / 4] !== this.color) {
-                                imgData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
-                                imgData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
-                                imgData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
+                            else {
+                                imgData.data[pos] = (this.referencePixels[pos] / 255) * red
+                                imgData.data[pos+1] = (this.referencePixels[pos+1] / 255) * green
+                                imgData.data[pos+2] = (this.referencePixels[pos+2] / 255) * blue
 
                                 this.colouredPixels[pos/4] = {
-                                    color: this.color,
+                                    red: red, 
+                                    green: green, 
+                                    blue: blue,
+                                    alpha: imgData.data[pos+3],
                                     sticker: false,
                                 }
                             }
@@ -310,8 +393,8 @@
             this.appliedZoom = this.zoomLevel
 
             // Get component bounding rect values
-            this.width = Math.round(this.$refs.vpcImage.getBoundingClientRect().width)
-            this.height = Math.round(this.$refs.vpcImage.getBoundingClientRect().height)
+            this.width = Math.round(this.$refs.vpcImage.getBoundingClientRect().width) * this.canvasRatio
+            this.height = Math.round(this.$refs.vpcImage.getBoundingClientRect().height) * this.canvasRatio
             this.top = Math.round(this.$refs.vpcImage.getBoundingClientRect().top)
             this.left = Math.round(this.$refs.vpcImage.getBoundingClientRect().left)
 
@@ -361,23 +444,22 @@
                             continue
                         }
 
-                        // Convert the color
-                        let color = Color(this.colouredPixels[i].color)
+                        let currentColor = this.colouredPixels[i]
 
                         // Get pixel position
                         let pos = i * 4
 
                         // Paint pixel
                         if (!this.colouredPixels[i].sticker) {
-                            newLayerData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
-                            newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
-                            newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
+                            newLayerData.data[pos] = (this.referencePixels[pos] / 255) * currentColor.red
+                            newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * currentColor.green
+                            newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * currentColor.blue
                             newLayerData.data[pos+3] = this.referencePixels[pos+3]
                         } else {
-                            if (color.alpha() > 0) {
-                                newLayerData.data[pos] = color.red()
-                                newLayerData.data[pos+1] = color.green()
-                                newLayerData.data[pos+2] = color.blue()
+                            if (currentColor.alpha > 0) {
+                                newLayerData.data[pos] = currentColor.red
+                                newLayerData.data[pos+1] = currentColor.green
+                                newLayerData.data[pos+2] = currentColor.blue
                             }
                         }
                     }

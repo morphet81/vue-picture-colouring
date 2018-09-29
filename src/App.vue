@@ -127,10 +127,6 @@ export default {
     }
   },
 
-  mounted () {
-    this.toolWidth = 21
-  },
-
   components: {
     vpcImage
   }
@@ -160,14 +156,14 @@ html, body {
   display: flex;
   justify-content: center;
   width: 100vw;
-  height: 40vh;
+  height: 50vh;
   margin: 4vh 0 4vh 0;
 }
 
 .vic-image {
   margin-left: 10vw;
-  width: 40vh;
-  height: 40vh;
+  width: 50vh;
+  height: 50vh;
   border: solid 1px red;
 }
 

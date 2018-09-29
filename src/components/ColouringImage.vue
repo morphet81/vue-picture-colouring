@@ -173,7 +173,7 @@
                 stickerImage.onload = () => {
                     ctx.save()
                     ctx.translate(x, y)
-                    ctx.rotate((-40 + Math.random() * 80) * Math.PI / 180)
+                    ctx.rotate((-40 + Math.random() * 80) * Math.PI / 180)      // Random rotate
 
                     // Draw the sticker
                     ctx.drawImage(
@@ -185,15 +185,22 @@
                     )
                     ctx.restore()
 
-                    // Make sure the sticker does appear on pixels that are originally transparent
+                    // Make sure the sticker does not appear on pixels that are originally transparent
                     var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
 
-                    // Use diagonal for the "checked rectangle" around the refernce point as the sticker can have a rotation
-                    let padding = Math.ceil(Math.sqrt(this.stickerWidth*this.stickerWidth + this.stickerHeight*this.stickerHeight) / 2)
+                    // Use diagonal for the "checked rectangle" around the reference point as the sticker can have a rotation
+                    let padding = Math.ceil(Math.sqrt(this.stickerWidth * this.stickerWidth + this.stickerHeight * this.stickerHeight) / 2)
                     for (var pixelX = x - padding; pixelX < x + padding + 1; pixelX++) {
                         for (var pixelY = y - padding; pixelY < y + padding + 1; pixelY++) {
                             let pos = (pixelY - 1) * this.canvas.width * 4 + pixelX * 4
                             imgData.data[pos+3] = this.originalPixels[pos+3]
+
+                            if (this.originalPixels[pos+3] > 0) {
+                                this.colouredPixels[pos/4] = {
+                                    color: Color.rgb(imgData.data[pos], imgData.data[pos+1], imgData.data[pos+2]),
+                                    sticker: true,
+                                }
+                            }
                         }
                     }
                     ctx.putImageData(imgData, 0, 0)
@@ -236,7 +243,10 @@
                                 imgData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
                                 imgData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
 
-                                this.colouredPixels[pos/4] = this.color
+                                this.colouredPixels[pos/4] = {
+                                    color: this.color,
+                                    sticker: false,
+                                }
                             }
                         }
                     }
@@ -346,24 +356,30 @@
                     // Then we put back pixels values that were on the canvas but not on the former main layer
                     var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
                     for (var i = 0; i < this.colouredPixels.length; i++) {
-                        let color = Color(this.colouredPixels[i])
-                        let red = color.red()
-                        let green = color.green()
-                        let blue = color.blue()
-
                         // If current pixel is not colored, continue
-                        if (red == 0 && green == 0 && blue == 0) {
+                        if (!this.colouredPixels[i]) {
                             continue
                         }
+
+                        // Convert the color
+                        let color = Color(this.colouredPixels[i].color)
 
                         // Get pixel position
                         let pos = i * 4
 
                         // Paint pixel
-                        newLayerData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
-                        newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
-                        newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
-                        newLayerData.data[pos+3] = this.referencePixels[pos+3]
+                        if (!this.colouredPixels[i].sticker) {
+                            newLayerData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
+                            newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
+                            newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
+                            newLayerData.data[pos+3] = this.referencePixels[pos+3]
+                        } else {
+                            if (color.alpha() > 0) {
+                                newLayerData.data[pos] = color.red()
+                                newLayerData.data[pos+1] = color.green()
+                                newLayerData.data[pos+2] = color.blue()
+                            }
+                        }
                     }
                     ctx.putImageData(newLayerData, 0, 0)
                 }

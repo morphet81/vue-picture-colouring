@@ -288,12 +288,14 @@
                             imgData.data[pos+3] = this.originalPixels[pos+3]
 
                             // We keep colored pixels. Using the util context image data for doing so
-                            this.colouredPixels[pos/4] = {
-                                red: utilImgData.data[pos], 
-                                green: utilImgData.data[pos+1], 
-                                blue: utilImgData.data[pos+2],
-                                alpha: utilImgData.data[pos+3],
-                                sticker: true,
+                            if (utilImgData.data[pos+3] > 0) {
+                                this.colouredPixels[pos/4] = {
+                                    red: utilImgData.data[pos], 
+                                    green: utilImgData.data[pos+1], 
+                                    blue: utilImgData.data[pos+2],
+                                    alpha: utilImgData.data[pos+3],
+                                    sticker: true,
+                                }
                             }
                         }
                     }

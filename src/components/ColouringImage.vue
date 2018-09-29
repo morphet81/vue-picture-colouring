@@ -233,6 +233,7 @@
                 // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
                 this.registerReferencePixels()
             },
+
             draw (x, y) {
                 if (!this.sticker) {
                     this.paint(x, y)
@@ -240,28 +241,45 @@
                     this.stick(x, y)
                 }
             },
+
+            drawStickerToContext (sticker, ctx, x, y, rotation) {
+                ctx.save()
+                ctx.translate(x, y)
+                ctx.rotate(rotation)
+
+                // Draw the sticker
+                ctx.drawImage(
+                    sticker,
+                    -this.normalizedStickerWidth / 2,
+                    -this.normalizedStickerHeight / 2,
+                    this.normalizedStickerWidth,
+                    this.normalizedStickerHeight
+                )
+
+                ctx.restore()
+            },
+
             stick (x, y) {
                 let ctx = this.canvas.getContext('2d')
 
                 var stickerImage = new Image()
                 stickerImage.onload = () => {
-                    ctx.save()
-                    ctx.translate(x, y)
-                    ctx.rotate((-40 + Math.random() * 80) * Math.PI / 180)      // Random rotate
+                    let randomRotation = (-40 + Math.random() * 80) * Math.PI / 180
 
-                    // Draw the sticker
-                    ctx.drawImage(
-                        stickerImage,
-                        -this.normalizedStickerWidth / 2,
-                        -this.normalizedStickerHeight / 2,
-                        this.normalizedStickerWidth,
-                        this.normalizedStickerHeight
-                    )
-                    ctx.restore()
+                    this.drawStickerToContext(stickerImage, ctx, x, y, randomRotation)
 
                     // Make sure the sticker does not appear on pixels that are originally transparent
                     var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
 
+                    // Now we need to keep information on pixels colored by the sticker. We must ensure we take ONLY sticker's
+                    // pixels, so we will draw the sticker in the exact same position in the utils canvas, and take pixel
+                    // values from the utils canvas. This way we don't take main layer pixel information by mistake
+                    let utilCtx = this.utilCanvas.getContext('2d')
+                    utilCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+                    this.drawStickerToContext(stickerImage, utilCtx, x, y, randomRotation)
+                    var utilImgData = utilCtx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+
+                    // Here we will keep transparent pixels that are in the main layer
                     // Use diagonal for the "checked rectangle" around the reference point as the sticker can have a rotation
                     let padding = Math.ceil(Math.sqrt(this.normalizedStickerWidth * this.normalizedStickerWidth + this.normalizedStickerHeight * this.normalizedStickerHeight) / 2)
                     for (var pixelX = x - padding; pixelX < x + padding + 1; pixelX++) {
@@ -269,14 +287,13 @@
                             let pos = (pixelY - 1) * this.canvas.width * 4 + pixelX * 4
                             imgData.data[pos+3] = this.originalPixels[pos+3]
 
-                            if (this.originalPixels[pos+3] > 0) {
-                                this.colouredPixels[pos/4] = {
-                                    red: imgData.data[pos], 
-                                    green: imgData.data[pos+1], 
-                                    blue: imgData.data[pos+2],
-                                    alpha: imgData.data[pos+3],
-                                    sticker: true,
-                                }
+                            // We keep colored pixels. Using the util context image data for doing so
+                            this.colouredPixels[pos/4] = {
+                                red: utilImgData.data[pos], 
+                                green: utilImgData.data[pos+1], 
+                                blue: utilImgData.data[pos+2],
+                                alpha: utilImgData.data[pos+3],
+                                sticker: true,
                             }
                         }
                     }

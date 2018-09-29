@@ -122,6 +122,20 @@
 
                 return pixels
             },
+
+            registerReferencePixels () {
+                if (this.bwSrc) {
+                    let ctx = this.utilCanvas.getContext('2d')
+                    ctx.save()
+                    this.applyTransformations(ctx)
+                    ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
+                    ctx.restore()
+                    this.referencePixels = this.getPixels(this.utilCanvas)
+                } else {
+                    this.referencePixels = this.originalPixels
+                }
+            },
+
             init () {
                 let ctx = this.canvas.getContext('2d')
 
@@ -143,16 +157,7 @@
                 this.originalPixels = this.getPixels(this.canvas)
 
                 // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
-                if (this.bwSrc) {
-                    let ctx = this.utilCanvas.getContext('2d')
-                    ctx.save()
-                    this.applyTransformations(ctx)
-                    ctx.drawImage(this.bwImage, 0, 0, this.canvas.width, this.canvas.height)
-                    ctx.restore()
-                    this.referencePixels = this.getPixels(this.utilCanvas)
-                } else {
-                    this.referencePixels = this.originalPixels
-                }
+                this.registerReferencePixels()
             },
             draw (x, y) {
                 if (!this.sticker) {
@@ -291,8 +296,6 @@
             }
         },
         mounted () {
-            let that = this
-
             // Setup the applied zoom level and forbid modify it after init
             this.appliedZoom = this.zoomLevel
 
@@ -306,14 +309,14 @@
             this.image = new Image()
             this.image.onload = () => {
                 // If the black and white version is given, also load it
-                if (that.bwSrc) {
-                    that.bwImage = new Image()
-                    that.bwImage.onload = () => {
-                        that.init()
+                if (this.bwSrc) {
+                    this.bwImage = new Image()
+                    this.bwImage.onload = () => {
+                        this.init()
                     }
-                    that.bwImage.src = this.bwSrc
+                    this.bwImage.src = this.bwSrc
                 } else {
-                    that.init()
+                    this.init()
                 }
             }
             this.image.src = this.src
@@ -324,13 +327,6 @@
                 var image = new Image()
                 image.onload = () => {
                     let ctx = that.canvas.getContext('2d')
-
-                    // Keep information about the former main layer pixels
-                    let formerPixels = this.originalPixels.slice()
-
-                    // Keep information about the current draw image
-                    var currentData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-                    let currentPixels = currentData.data.slice()
 
                     // First we need to clear the canvas
                     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
@@ -344,12 +340,30 @@
                     // Keep an array of original pixels values
                     this.originalPixels = this.getPixels(this.canvas)
 
+                    // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
+                    this.registerReferencePixels()
+
                     // Then we put back pixels values that were on the canvas but not on the former main layer
                     var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-                    for (var i = 0; i < newLayerData.data.length; i++) {
-                        if (formerPixels[i] != currentPixels[i]) {
-                            newLayerData.data[i] = currentPixels[i]
+                    for (var i = 0; i < this.colouredPixels.length; i++) {
+                        let color = Color(this.colouredPixels[i])
+                        let red = color.red()
+                        let green = color.green()
+                        let blue = color.blue()
+
+                        // If current pixel is not colored, continue
+                        if (red == 0 && green == 0 && blue == 0) {
+                            continue
                         }
+
+                        // Get pixel position
+                        let pos = i * 4
+
+                        // Paint pixel
+                        newLayerData.data[pos] = (this.referencePixels[pos] / 255) * color.red()
+                        newLayerData.data[pos+1] = (this.referencePixels[pos+1] / 255) * color.green()
+                        newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * color.blue()
+                        newLayerData.data[pos+3] = this.referencePixels[pos+3]
                     }
                     ctx.putImageData(newLayerData, 0, 0)
                 }

@@ -2,9 +2,14 @@
   <div id="app">
     <div class="drawing-container">
       <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
+        :erase="erase" :tool-width="toolWidth" :src="mainLayers[currentMainLayer]"
+        :sticker-width="stickerSize" :sticker-height="stickerSize"
+        :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="45"></vpc-image>
+
+      <!-- <vpc-image class="vic-image" ref="vicImage" :style="imageStyle" :color="colors[currentColor]" :sticker="stickers[currentSticker]" 
       :erase="erase" :tool-width="toolWidth" :src="mainLayers[currentMainLayer]"
       :bw-src="require('./assets/watch-sketch-example.png')" :sticker-width="stickerSize" :sticker-height="stickerSize"
-      :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="45"></vpc-image>
+      :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="45"></vpc-image> -->
     </div>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
@@ -46,8 +51,8 @@ export default {
       currentColor: 0,
       currentSticker: null,
       thumbnailSrc: null,
-      zoomLevel: 1.5,
-      toolWidth: 18,
+      zoomLevel: 1,
+      toolWidth: 36,
       colors: [
         '#dd3b3b',
         '#3bdd58',
@@ -55,12 +60,12 @@ export default {
         '#c73bdd'
       ],
       mainLayers: [
-        require('./assets/case.png'),
-        require('./assets/case-2.png')
+        require('./assets/case-3.png'),
+        require('./assets/case-4.png')
       ],
       subLayers: [
-        require('./assets/wrist.png'),
-        require('./assets/face.png'),
+        // require('./assets/wrist.png'),
+        // require('./assets/face.png'),
       ],
       stickers: [
         require('./assets/stickers/bull.png'),

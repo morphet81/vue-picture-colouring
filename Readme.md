@@ -72,7 +72,8 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 |sticker-width|The width of the sticker|32|
 |sticker-height|The height of the sticker|32|
 |erase|Indicates if the tool is in erase mode|false|
-|sub-layers|Images source URLs for elements to be displayed below the main layer. It is not possible to colour it but it will appear in the snapshot|[]|
+|sub-layers|Images source URLs for elements to be displayed below the main layer. It is not possible to colour it but it will appear in the snapshot. They are displayed in the same order they are given (the first one backward)|[]|
+|up-layers|Images source URLs for elements to be displayed above the main layer. It is not possible to colour it but it will appear in the snapshot. They are displayed in the same order they are given (the first one backward)|[]|
 |zoom-level|Initial zoom level to be applied to the scene|1|
 |rotation|Initial angle in degrees to be applied to the scene|0|
 |canvas-ratio|Canvas scale ratio. This allows to improve final image resolution|2|

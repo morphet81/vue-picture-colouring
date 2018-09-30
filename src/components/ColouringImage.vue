@@ -1,8 +1,8 @@
 <template>
-    <div ref="vpcImage" class="vpc-image">
+    <div ref="vpcImage" class="vpc-image" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
-        <div class="sublayer-container" v-for="(subLayer, i) in subLayers" :key="i">
-            <img class="sublayer" :style="subLayerStyle" :src="subLayer" :id="`subLayer${i}`"/>
+        <div class="secondary-layer-container sublayer-container" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
+            <img class="secondary-layer" :style="secondaryLayerStyle" :src="subLayer" :id="`subLayer${i}`"/>
         </div>
 
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
@@ -12,7 +12,12 @@
         <canvas class="rendering-canvas" ref="tmpCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
 
         <!-- Main drawing canvas -->
-        <canvas id="drawing-canvas" ref="canvas" :style="canvasStyle" :width="width" :height="height" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe"></canvas>
+        <canvas id="drawing-canvas" ref="canvas" :style="canvasStyle" :width="width" :height="height"></canvas>
+
+        <!-- Up layers that will be integrated to snapshot but not possible to draw on -->
+        <div class="secondary-layer-container uplayer-container" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
+            <img class="secondary-layer" :style="secondaryLayerStyle" :src="upLayer" :id="`upLayer${i}`"/>
+        </div>
     </div>
 </template>
 
@@ -27,7 +32,6 @@
                 height: 0,
                 top: 0,
                 left: 0,
-                image: null,
                 bwImage: null,
                 canvasBoundingClientRect: null,
                 originalPixels: [],
@@ -57,7 +61,7 @@
                 return this.$refs.tmpCanvas
             },
 
-            subLayerStyle () {
+            secondaryLayerStyle () {
                 return {
                     'transform': `scale(${this.appliedZoom}) rotate(${this.rotation}deg)`
                 }
@@ -149,6 +153,16 @@
             },
 
             /**
+             * List of src that will be displayed in front of the main layer. These layers will not be colored.
+             */
+            upLayers: {
+                type: Array,
+                default: () => {
+                    return []
+                }
+            },
+
+            /**
              * Applied zoom level
              */
             zoomLevel: {
@@ -173,6 +187,9 @@
             }
         },
         methods: {
+            /**
+             * Convert coordinates from getBoundingClientRect() to canvas reference
+             */
             windowToCanvas (canvas, x, y) {
                 return {
                     x: Math.round(x * this.canvasRatio - this.canvasBoundingClientRect.left * (canvas.width  / this.canvasBoundingClientRect.width)),
@@ -180,6 +197,9 @@
                 };
             },
 
+            /**
+             * Apply any required transformation to a canvas
+             */
             applyTransformations (ctx) {
                 ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
                 ctx.scale(this.appliedZoom, this.appliedZoom)
@@ -187,21 +207,13 @@
                 ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2)
             },
             
+            /**
+             * Return canvas' pixels information
+             */
             getPixels (canvas) {
                 let ctx = canvas.getContext('2d')
-
-                var pixels = new Array(this.canvas.width * this.canvas.height * 4)
                 var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-
-                // Get all pixels information
-                for (var i = 0; i < imgData.data.length; i += 4) {
-                    pixels[i] = imgData.data[i]
-                    pixels[i+1] = imgData.data[i+1]
-                    pixels[i+2] = imgData.data[i+2]
-                    pixels[i+3] = imgData.data[i+3]
-                }
-
-                return pixels
+                return imgData.data
             },
 
             /**
@@ -232,22 +244,30 @@
                 })
             },
 
+            drawLayerImage (ctx, layerImage) {
+                // Ensure the canvas is empty
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    
+                // Apply initial transformation if needed
+                ctx.save()
+                this.applyTransformations(ctx)
+    
+                // Draw the main layer
+                ctx.drawImage(layerImage, 0, 0, this.canvas.width, this.canvas.height)
+                ctx.restore()
+            },
+
+            /**
+             * Initialize the scene
+             */
             init () {
                 // Load the main layer image
-                this.image = new Image()
-                this.image.onload = () => {
+                let image = new Image()
+                image.onload = () => {
                     let ctx = this.tmpCanvas.getContext('2d')
     
-                    // Ensure the canvas is empty
-                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    
-                    // Apply initial transformation if needed
-                    ctx.save()
-                    this.applyTransformations(ctx)
-    
-                    // Draw the main layer
-                    ctx.drawImage(this.image, 0, 0, this.canvas.width, this.canvas.height)
-                    ctx.restore()
+                    // Draw the image
+                    this.drawLayerImage(ctx, image)
     
                     // Init an array to keep in memory what color was used on each pixel
                     this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
@@ -262,9 +282,12 @@
                             mainCtx.putImageData(ctx.getImageData(0, 0, this.canvas.width, this.canvas.height), 0, 0)
                         })
                 }
-                this.image.src = this.src
+                image.src = this.src
             },
 
+            /**
+             * Draw or apply sticker depending on current mode
+             */
             draw (x, y) {
                 if (!this.sticker) {
                     this.paint(x, y)
@@ -273,6 +296,9 @@
                 }
             },
 
+            /**
+             * Draw a sticker to the given context applying a certain rotation
+             */
             drawStickerToContext (sticker, ctx, x, y, rotation) {
                 ctx.save()
                 ctx.translate(x, y)
@@ -290,6 +316,9 @@
                 ctx.restore()
             },
 
+            /**
+             * Apply the current sticker to the given coordinates
+             */
             stick (x, y) {
                 let ctx = this.canvas.getContext('2d')
 
@@ -334,6 +363,10 @@
                 }
                 stickerImage.src = this.sticker
             },
+
+            /**
+             * Apply color to the given coordinates
+             */
             paint (x, y) {
                 let ctx = this.canvas.getContext('2d')
                 let color = Color(this.color)
@@ -386,7 +419,23 @@
                 }
                 ctx.putImageData(imgData, 0, 0)
             },
-            snapshotCanvas (drawSublayers) {
+
+            /**
+             * Draw the given secondary layers into ctx
+             */
+            drawSecondaryLayer (ctx, layers, refKey) {
+                ctx.save()
+                this.applyTransformations(ctx)
+                for (var i = 0; i < layers.length; i++) {
+                    ctx.drawImage(document.getElementById(`${refKey}${i}`), 0, 0, this.canvas.width, this.canvas.height)
+                }
+                ctx.restore()
+            },
+
+            /**
+             * Create a snapshot of the scene including sub and up layers. Returns a base64 src
+             */
+            snapshot () {
                 return new Promise((resolve, reject) => {
                     let that = this
                     let ctx = this.utilCanvas.getContext('2d')
@@ -394,20 +443,17 @@
                     // Ensure nothing remains in the canvas
                     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
-                    // Draw sub layers if required
-                    ctx.save()
-                    this.applyTransformations(ctx)
-                    if (drawSublayers) {
-                        for (var i = 0; i < this.subLayers.length; i++) {
-                            ctx.drawImage(document.getElementById(`subLayer${i}`), 0, 0, this.canvas.width, this.canvas.height)
-                        }
-                    }
-                    ctx.restore()
+                    // Draw sub layers
+                    this.drawSecondaryLayer(ctx, this.subLayers, 'subLayer')
 
                     // Draw main layer
                     var mainLayer = new Image()
                     mainLayer.onload = () => {
                         ctx.drawImage(mainLayer, 0, 0, that.canvas.width, that.canvas.height)
+
+                        // Draw sub layers
+                        this.drawSecondaryLayer(ctx, this.upLayers, 'upLayer')
+                        
                         mainLayer = null
                         resolve(this.utilCanvas.toDataURL())
                     }
@@ -417,18 +463,27 @@
                     mainLayer.src = this.canvas.toDataURL()
                 })
             },
-            snapshot () {
-                return this.snapshotCanvas(true)
-            },
+
+            /**
+             * Handle click event. Basically gets click's coordinates in canvas and draw whatever should be
+             */
             onClick (e) {
                 var loc = this.windowToCanvas(this.canvas, e.clientX, e.clientY)
                 this.draw(loc.x, loc.y)
             },
+
+            /**
+             * Handle the touch start event, mainly for Safari issue
+             */
             onTouchStart () {
                 // On Safari, the canvas bounding box will change as touch goes, so we have to ensure to always
                 // use the same throughout all the move process
                 this.canvasBoundingClientRect = this.canvas.getBoundingClientRect()
             },
+
+            /**
+             * Handle the finger move event
+             */
             onSwipe (e) {
                 if (this.sticker) {
                     return
@@ -438,6 +493,7 @@
                 this.paint(loc.x, loc.y)
             }
         },
+
         mounted () {
             // Setup the applied zoom level and forbid modify it after init
             this.appliedZoom = this.zoomLevel
@@ -451,23 +507,23 @@
             // Init the drawing
             this.init()
         },
+
         watch: {
+            /**
+             * When switching the main layer, we need to load it and make sure everything that was drawn before
+             * is drawn on the new layer
+             */
             src () {
                 // Emit a refresh start event
                 this.$emit('refresh-start')
 
+                // Load the new layer
                 var image = new Image()
                 image.onload = () => {
                     let ctx = this.tmpCanvas.getContext('2d')
-
-                    // First we need to clear the canvas
-                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-
-                    // We draw the new layer
-                    ctx.save()
-                    this.applyTransformations(ctx)
-                    ctx.drawImage(image, 0, 0, this.canvas.width, this.canvas.height)
-                    ctx.restore()
+    
+                    // Draw the image
+                    this.drawLayerImage(ctx, image)
 
                     // Keep an array of original pixels values
                     this.originalPixels = this.getPixels(this.tmpCanvas)
@@ -524,17 +580,24 @@
         overflow: hidden;   
     }
 
-    .sublayer-container {
+    .secondary-layer-container {
         position: absolute;
         overflow: hidden;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
+    }
+
+    .sublayer-container {
         z-index: 0;
     }
 
-    .sublayer {
+    .uplayer-container {
+        z-index: 2;
+    }
+
+    .secondary-layer {
         width: 100%;
         height: 100%;
     }

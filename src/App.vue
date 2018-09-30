@@ -5,7 +5,7 @@
         :erase="erase" :tool-width="toolWidth" :src="mainLayers[currentMainLayer]"
         :sticker-width="stickerSize" :sticker-height="stickerSize"
         :bw-src="mainLayersBw[currentMainLayer]"
-        :sub-layers="subLayers" :zoom-level="zoomLevel" :rotation="45"
+        :sub-layers="subLayers" :up-layers="upLayers" :zoom-level="zoomLevel" :rotation="45"
         @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd"></vpc-image>
     </div>
     <div class="colors">
@@ -57,15 +57,18 @@ export default {
         '#c73bdd'
       ],
       mainLayers: [
-        require('./assets/case-3.png'),
-        require('./assets/case-4.png')
+        require('./assets/wrist-1.png'),
+        require('./assets/wrist-2.png')
       ],
       mainLayersBw: [
-        require('./assets/case-3-bw.png'),
-        require('./assets/case-4-bw.png')
+        require('./assets/wrist-1.png'),
+        require('./assets/wrist-1.png')
+      ],
+      upLayers: [
+        require('./assets/case-3.png')
       ],
       subLayers: [
-        // require('./assets/wrist.png'),
+        require('./assets/background.png'),
         // require('./assets/face.png'),
       ],
       stickers: [

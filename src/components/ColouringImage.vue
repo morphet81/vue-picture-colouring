@@ -2,7 +2,7 @@
     <div ref="vpcImage" class="vpc-image" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
         <div class="secondary-layer-container sublayer-container" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
-            <img class="secondary-layer" :style="secondaryLayerStyle" :src="subLayer" :id="`subLayer${i}`"/>
+            <img class="secondary-layer" :style="{secondaryLayerStyle: subLayer.transform}" :src="subLayer.src" :id="`subLayer${i}`"/>
         </div>
 
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
@@ -16,7 +16,7 @@
 
         <!-- Up layers that will be integrated to snapshot but not possible to draw on -->
         <div class="secondary-layer-container uplayer-container" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
-            <img class="secondary-layer" :style="secondaryLayerStyle" :src="upLayer" :id="`upLayer${i}`"/>
+            <img class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : ''" :src="upLayer.src" :id="`upLayer${i}`"/>
         </div>
     </div>
 </template>
@@ -424,12 +424,17 @@
              * Draw the given secondary layers into ctx
              */
             drawSecondaryLayer (ctx, layers, refKey) {
-                ctx.save()
-                this.applyTransformations(ctx)
                 for (var i = 0; i < layers.length; i++) {
+                    ctx.save()
+
+                    // Apply transformation only if required
+                    if (layers[i].transform) {
+                        this.applyTransformations(ctx)
+                    }
+
                     ctx.drawImage(document.getElementById(`${refKey}${i}`), 0, 0, this.canvas.width, this.canvas.height)
+                    ctx.restore()
                 }
-                ctx.restore()
             },
 
             /**

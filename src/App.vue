@@ -65,11 +65,10 @@ export default {
         require('./assets/wrist-1.png')
       ],
       upLayers: [
-        require('./assets/case-3.png')
+        {src: require('./assets/case-3.png'), transform: true}
       ],
       subLayers: [
-        require('./assets/background.png'),
-        // require('./assets/face.png'),
+        {src: require('./assets/background.png'), transform: false},
       ],
       stickers: [
         require('./assets/stickers/bull.png'),

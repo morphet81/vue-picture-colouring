@@ -18,7 +18,7 @@ Yarn
 yarn add vue-picture-colouring
 ```
 
-# Usage
+## Usage
 
 Import the package and declare your component
 
@@ -54,9 +54,21 @@ Then where you need it
 let snapBase64 = this.$refs.colouring.snapshot()
 ```
 
-# Colour or Sticker?
+## Colour or Sticker?
 
 The tool will paint the given color unless a sticker URL is given. The touchmove event 
+
+## Sublayers and Uplayers
+
+Sublalyers and Uplayers are objects giving an image src and indicating if the scene transformations should be applied. This is useful
+if you have for example a background. It should not be rotated nor scaled to have a nice final result.
+
+```
+{
+    src: 'path/to/image',
+    transform: true|false,
+}
+```
 
 ## Properties
 
@@ -72,8 +84,8 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 |sticker-width|The width of the sticker|32|
 |sticker-height|The height of the sticker|32|
 |erase|Indicates if the tool is in erase mode|false|
-|sub-layers|Images source URLs for elements to be displayed below the main layer. It is not possible to colour it but it will appear in the snapshot. They are displayed in the same order they are given (the first one backward)|[]|
-|up-layers|Images source URLs for elements to be displayed above the main layer. It is not possible to colour it but it will appear in the snapshot. They are displayed in the same order they are given (the first one backward)|[]|
+|sub-layers|Layers to be displayed below the main layer. It is not possible to colour it but it will appear in the snapshot. They are displayed in the same order they are given (the first one backward)|[]|
+|up-layers|Layers to be displayed above the main layer. It is not possible to colour it but it will appear in the snapshot. They are displayed in the same order they are given (the first one backward)|[]|
 |zoom-level|Initial zoom level to be applied to the scene|1|
 |rotation|Initial angle in degrees to be applied to the scene|0|
 |canvas-ratio|Canvas scale ratio. This allows to improve final image resolution|2|

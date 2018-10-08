@@ -54,6 +54,11 @@ Then where you need it
 let snapBase64 = this.$refs.colouring.snapshot()
 ```
 
+You can also take a snapshot without applying the visible rotation and scale. This is useful if you wish to reuse the drawing result as the sub or up layer of another drawing in which transformations will be changed.
+```javascript
+let snapBase64 = this.$refs.colouring.snapshot(false)
+```
+
 ## Colour or Sticker?
 
 The tool will paint the given color unless a sticker URL is given. The touchmove event 

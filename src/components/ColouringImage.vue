@@ -200,10 +200,13 @@
             /**
              * Apply any required transformation to a canvas
              */
-            applyTransformations (ctx) {
+            applyTransformations (ctx, invert) {
+                let scale = invert ? 1 / this.appliedZoom : this.appliedZoom
+                let rotation = this.rotation * Math.PI / 180 * (invert ? -1 : 1)
+
                 ctx.translate(this.canvas.width / 2, this.canvas.height / 2)
-                ctx.scale(this.appliedZoom, this.appliedZoom)
-                ctx.rotate(this.rotation * Math.PI / 180)
+                ctx.scale(scale, scale)
+                ctx.rotate(rotation)
                 ctx.translate(-this.canvas.width / 2, -this.canvas.height / 2)
             },
             
@@ -423,12 +426,12 @@
             /**
              * Draw the given secondary layers into ctx
              */
-            drawSecondaryLayer (ctx, layers, refKey) {
+            drawSecondaryLayer (ctx, layers, refKey, applyTransformations) {
                 for (var i = 0; i < layers.length; i++) {
                     ctx.save()
 
                     // Apply transformation only if required
-                    if (layers[i].transform) {
+                    if (applyTransformations && layers[i].transform) {
                         this.applyTransformations(ctx)
                     }
 
@@ -440,7 +443,7 @@
             /**
              * Create a snapshot of the scene including sub and up layers. Returns a base64 src
              */
-            snapshot () {
+            snapshot (applyTransformations = true) {
                 return new Promise((resolve, reject) => {
                     let that = this
                     let ctx = this.utilCanvas.getContext('2d')
@@ -449,15 +452,24 @@
                     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
                     // Draw sub layers
-                    this.drawSecondaryLayer(ctx, this.subLayers, 'subLayer')
+                    this.drawSecondaryLayer(ctx, this.subLayers, 'subLayer', applyTransformations)
 
                     // Draw main layer
                     var mainLayer = new Image()
                     mainLayer.onload = () => {
+                        if (!applyTransformations) {
+                            ctx.save()
+                            this.applyTransformations(ctx, true)
+                        }
+
                         ctx.drawImage(mainLayer, 0, 0, that.canvas.width, that.canvas.height)
 
+                        if (!applyTransformations) {
+                            ctx.restore()
+                        }
+
                         // Draw sub layers
-                        this.drawSecondaryLayer(ctx, this.upLayers, 'upLayer')
+                        this.drawSecondaryLayer(ctx, this.upLayers, 'upLayer', applyTransformations)
                         
                         mainLayer = null
                         resolve(this.utilCanvas.toDataURL())

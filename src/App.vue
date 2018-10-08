@@ -27,6 +27,8 @@
       <div class="blank"></div>
       <button class="snapshot" @click="onSnapshotClick">Snapshot</button>
       <div class="blank"></div>
+      <button class="snapshot" @click="onSnapshotOriginalClick">Snapshot original</button>
+      <div class="blank"></div>
     </div>
     <img class="thumbnail" :src="thumbnailSrc" />
   </div>
@@ -135,6 +137,12 @@ export default {
 
     onSnapshotClick () {
       this.$refs.vicImage.snapshot().then(thumbnail => {
+        this.thumbnailSrc = thumbnail
+      })
+    },
+
+    onSnapshotOriginalClick () {
+      this.$refs.vicImage.snapshot(false).then(thumbnail => {
         this.thumbnailSrc = thumbnail
       })
     },

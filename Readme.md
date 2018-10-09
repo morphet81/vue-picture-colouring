@@ -116,5 +116,20 @@ You can easily save the current coloured pixels list using the ```cloneColouredP
 |rotation|Initial angle in degrees to be applied to the scene|0|
 |canvas-ratio|Canvas scale ratio. This allows to improve final image resolution|2|
 
+## Events
+
+__initialized__
+
+When initialization is finished. This will occure either at page load or after calling the ```clear``` method.
+
+__refresh-start__
+
+When the canvas is being refreshed after a change of main layer.
+
+__refresh-end__
+
+When the canvas has been refreshed after a change a main layer.
+
+
 ### *Licensing*
  *The icons used as stickers for the demo have been made by Freepik and were taken from [Flaticon website](https://www.flaticon.com/)*

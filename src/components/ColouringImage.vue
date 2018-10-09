@@ -287,6 +287,7 @@
                         .then(() => {
                             let mainCtx = this.canvas.getContext('2d')
                             mainCtx.putImageData(ctx.getImageData(0, 0, this.canvas.width, this.canvas.height), 0, 0)
+                            this.$emit('initialized')
                         })
                 }
                 image.src = this.src

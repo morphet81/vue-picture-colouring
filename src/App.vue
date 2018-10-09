@@ -6,7 +6,7 @@
         :sticker-width="stickerSize" :sticker-height="stickerSize"
         :bw-src="mainLayersBw[currentMainLayer]"
         :sub-layers="subLayers" :up-layers="upLayers" :zoom-level="zoomLevel" :rotation="45"
-        @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd"></vpc-image>
+        @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd" @initialized="onInitialized"></vpc-image>
     </div>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
@@ -162,7 +162,12 @@ export default {
 
     onRefreshEnd() {
       // console.log("end")
-    }
+    },
+
+    onInitialized () {
+        console.log('Initialized')
+        console.log(this.$refs.vicImage.colouredPixels)
+    },
   },
 
   components: {

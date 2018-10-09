@@ -241,7 +241,11 @@
                         this.bwImage.onerror = reject
                         this.bwImage.src = this.bwSrc
                     } else {
-                        this.referencePixels = this.originalPixels
+                        // Clone the original pixels array
+                        this.referencePixels = []
+                        for (let value of this.originalPixels) {
+                            this.referencePixels.push(value)
+                        }
                         resolve()
                     }
                 })
@@ -286,6 +290,69 @@
                         })
                 }
                 image.src = this.src
+            },
+
+            /**
+             * Return a clone array of coloured pixels
+             */
+            cloneColouredPixels () {
+                let colouredPixels = [];
+
+                for (let pixel of this.colouredPixels) {
+                        if (!pixel) {
+                            colouredPixels.push(null)
+                            continue
+                        }
+
+                        colouredPixels.push({
+                            red: pixel.red,
+                            green: pixel.green,
+                            blue: pixel.blue,
+                            sticker: pixel.sticker,
+                        });
+                }
+
+                return colouredPixels
+            },
+
+            /**
+             * Delete all drawings and stickers
+             */
+            clear () {
+                this.init()
+            },
+
+            /**
+             * Apply specific coloured pixels and redraw the final result
+             */
+            setColouredPixels (colouredPixels) {
+                this.colouredPixels = colouredPixels
+
+                let ctx = this.canvas.getContext('2d')
+
+                // Get pixels from the canvas
+                var imgData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+
+                // Apply colors on the canvas
+                for (let i = 0; i < colouredPixels.length; i++) {
+                    let pixel = colouredPixels[i]
+
+                    if (!pixel) continue
+
+                    let pos = i*4
+
+                    if (pixel.sticker) {
+                        imgData.data[pos] = pixel.red
+                        imgData.data[pos+1] = pixel.green
+                        imgData.data[pos+2] = pixel.blue
+                    } else {
+                        imgData.data[pos] = (this.referencePixels[pos] / 255) * pixel.red
+                        imgData.data[pos+1] = (this.referencePixels[pos+1] / 255) * pixel.green
+                        imgData.data[pos+2] = (this.referencePixels[pos+2] / 255) * pixel.blue
+                    }
+                }
+
+                ctx.putImageData(imgData, 0, 0)
             },
 
             /**
@@ -356,7 +423,6 @@
                                     red: utilImgData.data[pos], 
                                     green: utilImgData.data[pos+1], 
                                     blue: utilImgData.data[pos+2],
-                                    alpha: utilImgData.data[pos+3],
                                     sticker: true,
                                 }
                             }
@@ -413,7 +479,6 @@
                                     red: red, 
                                     green: green, 
                                     blue: blue,
-                                    alpha: imgData.data[pos+3],
                                     sticker: false,
                                 }
                             }
@@ -568,7 +633,7 @@
                                     newLayerData.data[pos+2] = (this.referencePixels[pos+2] / 255) * currentColor.blue
                                     newLayerData.data[pos+3] = this.referencePixels[pos+3]
                                 } else {
-                                    if (currentColor.alpha > 0) {
+                                    if (this.referencePixels[pos+3] > 0) {
                                         newLayerData.data[pos] = currentColor.red
                                         newLayerData.data[pos+1] = currentColor.green
                                         newLayerData.data[pos+2] = currentColor.blue

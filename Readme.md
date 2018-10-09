@@ -75,6 +75,27 @@ if you have for example a background. It should not be rotated nor scaled to hav
 }
 ```
 
+## Force colouring pixels
+
+It can be useful to force colouring the pixels of you picture, for example when you need to save the state of your drawing to reload it later. To do so you can use the ```setColouredPixels``` method:
+
+```javascript
+let colouredPixels = ['here is a list of your pixels']
+this.$refs.colouring.setColouredPixels(colouredPixels)
+```
+
+The list of coloured pixels should be the pixel size of the canvas (width * height) and contain either null (is no color applied) or a pixel structure as follow:
+```javascript
+{
+    red: 128,               // Red value
+    green: 128,             // Green value
+    blue: 128,              // Blue value
+    sticker: true|false     // Is it a pixel for drawing a sticker or not ?
+}
+```
+
+You can easily save the current coloured pixels list using the ```cloneColouredPixels``` method.
+
 ## Properties
 
 |Property   |Role                                                                                                                                   |Default    |

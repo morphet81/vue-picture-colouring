@@ -29,6 +29,8 @@
       <div class="blank"></div>
       <button class="snapshot" @click="onSnapshotOriginalClick">Snapshot original</button>
       <div class="blank"></div>
+      <button class="snapshot" @click="onSetPixelsClick">Set Pixels</button>
+      <div class="blank"></div>
     </div>
     <img class="thumbnail" :src="thumbnailSrc" />
   </div>
@@ -36,14 +38,14 @@
 
 <script>
 // import './components/index.js'
-import vpcImage from './components/index.js'
+import vpcImage from "./components/index.js";
 
 export default {
-  name: 'app',
-  data () {
+  name: "app",
+  data() {
     return {
       width: document.documentElement.clientWidth,
-      height: document.documentElement.clientWidth * 9 / 14,
+      height: (document.documentElement.clientWidth * 9) / 14,
       stickerSize: document.documentElement.clientWidth * 0.08,
       erase: false,
       currentMainLayer: 0,
@@ -52,125 +54,133 @@ export default {
       thumbnailSrc: null,
       zoomLevel: 1,
       toolWidth: 50,
-      colors: [
-        '#dd3b3b',
-        '#3bdd58',
-        '#3b76dd',
-        '#c73bdd'
-      ],
+      colors: ["#dd3b3b", "#3bdd58", "#3b76dd", "#c73bdd"],
       mainLayers: [
-        require('./assets/wrist-1.png'),
-        require('./assets/wrist-2.png')
+        require("./assets/wrist-1.png"),
+        require("./assets/wrist-2.png")
       ],
       mainLayersBw: [
-        require('./assets/wrist-1.png'),
-        require('./assets/wrist-1.png')
+        require("./assets/wrist-1.png"),
+        require("./assets/wrist-1.png")
       ],
-      upLayers: [
-        {src: require('./assets/case-3.png'), transform: true}
-      ],
+      upLayers: [{ src: require("./assets/case-3.png"), transform: true }],
       subLayers: [
-        {src: require('./assets/background.png'), transform: false},
+        { src: require("./assets/background.png"), transform: false }
       ],
       stickers: [
-        require('./assets/stickers/bull.png'),
-        require('./assets/stickers/chick.png'),
-        require('./assets/stickers/crab.png'),
-        require('./assets/stickers/fox.png'),
-        require('./assets/stickers/hedgehog.png'),
-        require('./assets/stickers/hippopotamus.png'),
-        require('./assets/stickers/koala.png'),
-        require('./assets/stickers/lemur.png'),
-        require('./assets/stickers/pig.png'),
-        require('./assets/stickers/tiger.png'),
-        require('./assets/stickers/whale.png'),
-        require('./assets/stickers/zebra.png'),
+        require("./assets/stickers/bull.png"),
+        require("./assets/stickers/chick.png"),
+        require("./assets/stickers/crab.png"),
+        require("./assets/stickers/fox.png"),
+        require("./assets/stickers/hedgehog.png"),
+        require("./assets/stickers/hippopotamus.png"),
+        require("./assets/stickers/koala.png"),
+        require("./assets/stickers/lemur.png"),
+        require("./assets/stickers/pig.png"),
+        require("./assets/stickers/tiger.png"),
+        require("./assets/stickers/whale.png"),
+        require("./assets/stickers/zebra.png")
       ]
-    }
+    };
   },
   computed: {
-    imageStyle () {
+    imageStyle() {
       return {
         // 'height': `${this.height}px`
-      }
+      };
     },
-    eraserStyle () {
+    eraserStyle() {
       return {
-        'border': this.erase ? 'solid 4px black' : ''
-      }
+        border: this.erase ? "solid 4px black" : ""
+      };
     }
   },
   methods: {
-    colorStyle (index) {
+    colorStyle(index) {
       return {
-        'background-color': this.colors[index],
-        'border': !this.erase && this.currentColor && this.currentColor == index ? 'solid 4px black' : ''
-      }
+        "background-color": this.colors[index],
+        border:
+          !this.erase && this.currentColor && this.currentColor == index
+            ? "solid 4px black"
+            : ""
+      };
     },
-    stickerStyle (index) {
+    stickerStyle(index) {
       return {
-        'background-color': this.currentSticker && this.currentSticker == index ? 'blue' : '',
-      }
+        "background-color":
+          this.currentSticker && this.currentSticker == index ? "blue" : ""
+      };
     },
 
-    onColorClick (index) {
-      this.currentColor = index
-      this.currentSticker = null
-      this.erase = false
+    onColorClick(index) {
+      this.currentColor = index;
+      this.currentSticker = null;
+      this.erase = false;
     },
 
-    onEraseClick () {
-      this.currentColor = null
-      this.currentSticker = null
-      this.erase = true
+    onEraseClick() {
+      this.currentColor = null;
+      this.currentSticker = null;
+      this.erase = true;
     },
 
-    onStickerClick (index) {
-      this.currentColor = null
-      this.currentSticker = index
-      this.erase = false
+    onStickerClick(index) {
+      this.currentColor = null;
+      this.currentSticker = index;
+      this.erase = false;
     },
 
-    onSwitchMainLayerClick () {
-      this.currentMainLayer = this.currentMainLayer == 0 ? 1 : 0
+    onSwitchMainLayerClick() {
+      this.currentMainLayer = this.currentMainLayer == 0 ? 1 : 0;
     },
 
-    onSnapshotClick () {
+    onSnapshotClick() {
       this.$refs.vicImage.snapshot().then(thumbnail => {
-        this.thumbnailSrc = thumbnail
-      })
+        this.thumbnailSrc = thumbnail;
+      });
     },
 
-    onSnapshotOriginalClick () {
+    onSnapshotOriginalClick() {
       this.$refs.vicImage.snapshot(false).then(thumbnail => {
-        this.thumbnailSrc = thumbnail
-      })
+        this.thumbnailSrc = thumbnail;
+      });
     },
 
-    onRefreshStart () {
+    onSetPixelsClick() {
+      this.$refs.vicImage.clear();
+
+      let colouredPixels = this.$refs.vicImage.cloneColouredPixels()
+
+      setTimeout(() => {
+          this.$refs.vicImage.setColouredPixels(colouredPixels)
+      }, 1000);
+    },
+
+    onRefreshStart() {
       // console.log("start")
     },
 
-    onRefreshEnd () {
+    onRefreshEnd() {
       // console.log("end")
-    },
+    }
   },
 
   components: {
     vpcImage
   }
-}
+};
 </script>
 
 <style>
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
 
 #app {
   position: fixed;
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -200,20 +210,23 @@ html, body {
   height: 12vh;
 }
 
-.colors, .stickers {
+.colors,
+.stickers {
   margin-top: 2vh;
   display: flex;
   flex-direction: row;
 }
 
-.color-container, .sticker-container {
+.color-container,
+.sticker-container {
   flex-grow: 1;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.color, .sticker {
+.color,
+.sticker {
   width: 8vw;
   height: 8vw;
 }

@@ -1,7 +1,7 @@
 <template>
     <div ref="vpcImage" class="vpc-image" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
-        <div class="secondary-layer-container sublayer-container" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
+        <div class="secondary-layer-container sublayer-container" :style="subLayerStyle(i)" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
             <img class="secondary-layer" :style="{secondaryLayerStyle: subLayer.transform}" :src="subLayer.src" :id="`subLayer${i}`"/>
         </div>
 
@@ -15,7 +15,7 @@
         <canvas id="drawing-canvas" ref="canvas" :style="canvasStyle" :width="width" :height="height"></canvas>
 
         <!-- Up layers that will be integrated to snapshot but not possible to draw on -->
-        <div class="secondary-layer-container uplayer-container" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
+        <div class="secondary-layer-container uplayer-container" :style="upLayerStyle(i)" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
             <img class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : ''" :src="upLayer.src" :id="`upLayer${i}`"/>
         </div>
     </div>
@@ -187,6 +187,18 @@
             }
         },
         methods: {
+            subLayerStyle (index) {
+                return {
+                    'z-index': (index + 1) * -10
+                }
+            },
+            
+            upLayerStyle (index) {
+                return {
+                    'z-index': (index + 1) * 10
+                }
+            },
+
             /**
              * Convert coordinates from getBoundingClientRect() to canvas reference
              */
@@ -672,25 +684,9 @@
         bottom: 0;
     }
 
-    .sublayer-container {
-        z-index: 0;
-    }
-
-    .uplayer-container {
-        z-index: 2;
-    }
-
     .secondary-layer {
         width: 100%;
         height: 100%;
-    }
-
-    .rendering-canvas {
-        z-index: 0;
-    }
-
-    #drawing-canvas {
-        z-index: 1;
     }
 
     canvas {
@@ -699,6 +695,7 @@
         left: 0;
         right: 0;
         bottom: 0;
+        z-index: -1;
     }
 
 </style>

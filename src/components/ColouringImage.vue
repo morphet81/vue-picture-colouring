@@ -673,6 +673,7 @@
     .vpc-image {
         position: relative;
         overflow: hidden;   
+        z-index: 9999999;
     }
 
     .secondary-layer-container {

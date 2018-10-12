@@ -63,7 +63,9 @@ export default {
         require("./assets/wrist-1.png"),
         require("./assets/wrist-1.png")
       ],
-      upLayers: [{ src: require("./assets/case-3.png"), transform: true }],
+      upLayers: [
+        { src: require("./assets/case-3.png"), transform: true }
+      ],
       subLayers: [
         { src: require("./assets/background.png"), transform: false }
       ],
@@ -165,8 +167,7 @@ export default {
     },
 
     onInitialized () {
-        console.log('Initialized')
-        console.log(this.$refs.vicImage.colouredPixels)
+      // console.log("initialized")
     },
   },
 

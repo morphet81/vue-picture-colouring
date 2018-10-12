@@ -2,7 +2,7 @@
     <div ref="vpcImage" class="vpc-image" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
         <div class="secondary-layer-container sublayer-container" :style="subLayerStyle(i)" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
-            <img class="secondary-layer" :style="{secondaryLayerStyle: subLayer.transform}" :src="subLayer.src" :id="`subLayer${i}`"/>
+            <img class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : ''" :src="subLayer.src" :id="`subLayer${i}`"/>
         </div>
 
         <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->

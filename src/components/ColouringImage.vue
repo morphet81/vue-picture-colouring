@@ -258,7 +258,7 @@
                         this.bwImage = new Image()
                         this.bwImage.onload = () => {
                             // Get the temp canvas and clear it
-                            let ctx = this.tmpCanvas.getContext('2d')
+                            let ctx = this.tmpCanvas2.getContext('2d')
                             ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
 
                             // Draw the image
@@ -781,6 +781,10 @@
 
                     // Keep the pixels of the current initial main canvas
                     this.withLayersPixels = this.getPixels(this.tmpCanvas)
+
+                    // var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+                    // let mainCtx = this.canvas.getContext('2d')
+                    // mainCtx.putImageData(newLayerData, 0, 0)
                 
                     // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
                     this.registerReferencePixels()

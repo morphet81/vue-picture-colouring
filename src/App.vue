@@ -5,7 +5,7 @@
         :erase="erase" :tool-width="toolWidth" :src="mainLayers[currentMainLayer]"
         :sticker-width="stickerSize" :sticker-height="stickerSize"
         :bw-src="mainLayersBw[currentMainLayer]"
-        :sub-layers="subLayers" :up-layers="upLayers" :zoom-level="zoomLevel" :rotation="45"
+        :sub-layers="subLayers" :up-layers="upLayers" :zoom-level="zoomLevel" :rotation="rotation"
         @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd" @initialized="onInitialized"></vpc-image>
     </div>
     <div class="colors">
@@ -33,6 +33,7 @@
       <div class="blank"></div>
     </div>
     <img class="thumbnail" :src="thumbnailSrc" />
+    <canvas ref="canvas" v-show="false"></canvas>
   </div>
 </template>
 
@@ -53,21 +54,33 @@ export default {
       currentSticker: null,
       thumbnailSrc: null,
       zoomLevel: 1,
+      rotation: 10,
       toolWidth: 50,
       colors: ["#dd3b3b", "#3bdd58", "#3b76dd", "#c73bdd"],
       mainLayers: [
-        require("./assets/wrist-1.png"),
-        require("./assets/wrist-2.png")
+        require('./assets/case-1.svg'),
+        require('./assets/case-2.svg'),
+        // require("./assets/wrist-1.png"),
+        // require("./assets/wrist-2.png")
       ],
       mainLayersBw: [
-        require("./assets/wrist-1.png"),
-        require("./assets/wrist-1.png")
+        require('./assets/case-1.svg')
+        // require("./assets/wrist-1.png"),
+        // require("./assets/wrist-1.png")
       ],
       upLayers: [
-        { src: require("./assets/case-3.png"), transform: true }
+        { 
+          src: require("./assets/case-3.png"), 
+          transform: true,
+          canvas: true,
+          pixels: null,
+        }
       ],
       subLayers: [
-        { src: require("./assets/background.png"), transform: false }
+        { 
+          src: require("./assets/background.png"), 
+          transform: false 
+        }
       ],
       stickers: [
         require("./assets/stickers/bull.png"),
@@ -169,7 +182,29 @@ export default {
     onInitialized () {
       // console.log("initialized")
     },
+
+    loadImage (src) {
+        return new Promise ((resolve, reject) => {
+            let image = new Image()
+            image.onload = () => resolve(image)
+            image.onerror = reject
+            image.src = src
+        })
+    },
   },
+
+    async created () {
+        let image = await this.loadImage(require('./assets/up-layer-pixels.png'))
+        let canvas = this.$refs.canvas
+
+        canvas.width = image.width
+        canvas.height = image.height
+
+        let ctx = canvas.getContext('2d')
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+        this.upLayers[0].pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    },
 
   components: {
     vpcImage

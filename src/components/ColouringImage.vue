@@ -265,7 +265,7 @@
                             this.drawLayerImage(ctx, this.bwImage)
 
                             // Get the data, and exit
-                            this.referencePixels = this.getPixels(this.tmpCanvas)
+                            this.referencePixels = this.getPixels(this.tmpCanvas2)
                             resolve()
                         }
                         this.bwImage.onerror = reject

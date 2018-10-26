@@ -414,9 +414,9 @@
                     // Now for each pixel, if the pixel should be coloured and the layer at this pixel is opaque, we apply the color
                     for (let i = 0; i < data.length; i += 4) {
                         if (pixelsData[i+3] && originalLayerData[i+3]) {
-                            data[i] = pixelsData[i]
-                            data[i+1] = pixelsData[i+1]
-                            data[i+2] = pixelsData[i+2]
+                            data[i] = (originalLayerData[i] / 255) * pixelsData[i]
+                            data[i+1] = (originalLayerData[i+1] / 255) * pixelsData[i+1]
+                            data[i+2] = (originalLayerData[i+2] / 255) * pixelsData[i+2]
                             data[i+3] = pixelsData[i+3]
                         }
                     }
@@ -781,10 +781,6 @@
 
                     // Keep the pixels of the current initial main canvas
                     this.withLayersPixels = this.getPixels(this.tmpCanvas)
-
-                    // var newLayerData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
-                    // let mainCtx = this.canvas.getContext('2d')
-                    // mainCtx.putImageData(newLayerData, 0, 0)
                 
                     // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
                     this.registerReferencePixels()

@@ -42,7 +42,9 @@ Then put the ```vpc-image``` component wherever you need and use properties list
 <vpc-image></vpc-image>
 ```
 
-You can make a snapshot using the ```snapshot``` method of the component. The method will return a base64 string.
+You can make a snapshot using the ```snapshot``` method of the component. The method will return a base64 data URL by defaul.
+
+Pass ```false``` as a first argument to snapshot without transformations and pass ```1``` as a second argument to get a blob image.
 
 First, give a reference to the component
 ```html

@@ -684,9 +684,10 @@
             },
 
             /**
-             * Create a snapshot of the scene including sub and up layers. Returns a base64 src
+             * Create a snapshot of the scene including sub and up layers. Returns a base64 src.
+             * format: 0 = toDataURL, 1 = toBlob
              */
-            snapshot (applyTransformations = true) {
+            snapshot (applyTransformations = true, format = 0) {
                 return new Promise((resolve, reject) => {
                     let ctx = this.tmpCanvas.getContext('2d')
 
@@ -705,7 +706,15 @@
                         this.drawSecondaryLayer(ctx, this.upLayers, 'upLayer', applyTransformations)
                         
                         mainLayer = null
-                        resolve(this.tmpCanvas.toDataURL())
+                        switch (format) {
+                            case 0:
+                                resolve(this.tmpCanvas.toDataURL())
+                                break
+                            case 1:
+                                this.tmpCanvas.toBlob(picture => {
+                                    resolve(picture)
+                                })
+                        }
                     }
                     mainLayer.onerror = () => {
                         reject()

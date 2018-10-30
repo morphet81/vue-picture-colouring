@@ -379,8 +379,14 @@
                     // Get pixels data
                     let originalLayerData = tmpCtx.getImageData(0, 0, this.canvas.width, this.canvas.height).data
 
+                    // Get black and white version of the layer's pixels
+                    let bwImage = await this.loadImage(layer.bwSrc)
+                    tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height) 
+                    this.drawLayerImage(tmpCtx, bwImage, layer.transform)
+                    let bwLayerData = tmpCtx.getImageData(0, 0, this.canvas.width, this.canvas.height).data
+
                     // Get layer's coloured pixels data
-                    let pixelsData = layer.pixels
+                    let pixelsData = this.clonePixelsAsData(layer.pixels)
 
                     // If layer zoom level is different than current, we need to get the layers colored pixels data 
                     // relatively to current zoom level
@@ -388,7 +394,7 @@
                     if (this.zoomLevel !== layer.zoomLevel) {
                         let ratio = this.zoomLevel / layer.zoomLevel
                         tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-                        tmpCtx.putImageData(new ImageData(new Uint8ClampedArray(layer.pixels), this.canvas.width, this.canvas.height), 0, 0)
+                        tmpCtx.putImageData(new ImageData(new Uint8ClampedArray(pixelsData), this.canvas.width, this.canvas.height), 0, 0)
 
                         // Then use the second temp canvas, sized as the layer inside the current scene
                         // We draw the first temp canvas inside the second
@@ -413,11 +419,18 @@
 
                     // Now for each pixel, if the pixel should be coloured and the layer at this pixel is opaque, we apply the color
                     for (let i = 0; i < data.length; i += 4) {
-                        if (pixelsData[i+3] && originalLayerData[i+3]) {
-                            data[i] = (originalLayerData[i] / 255) * pixelsData[i]
-                            data[i+1] = (originalLayerData[i+1] / 255) * pixelsData[i+1]
-                            data[i+2] = (originalLayerData[i+2] / 255) * pixelsData[i+2]
-                            data[i+3] = pixelsData[i+3]
+                        if (pixelsData[i+3] && bwLayerData[i+3]) {
+                            if (layer.pixels[i/4].sticker) {
+                                data[i] = pixelsData[i]
+                                data[i+1] = pixelsData[i+1]
+                                data[i+2] = pixelsData[i+2]
+                                data[i+3] = pixelsData[i+3]
+                            } else {
+                                data[i] = (bwLayerData[i] / 255) * pixelsData[i]
+                                data[i+1] = (bwLayerData[i+1] / 255) * pixelsData[i+1]
+                                data[i+2] = (bwLayerData[i+2] / 255) * pixelsData[i+2]
+                                data[i+3] = pixelsData[i+3]
+                            }
                         }
                     }
 
@@ -452,10 +465,10 @@
             /**
              * Return a clone array of coloured pixels as Canvas data
              */
-            cloneColouredPixelsAsData () {
+            clonePixelsAsData (pixels) {
                 let data = []
 
-                for (let pixel of this.colouredPixels) {
+                for (let pixel of pixels) {
                     if (!pixel) {
                         data.push(0)
                         data.push(0)

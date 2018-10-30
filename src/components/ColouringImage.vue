@@ -370,15 +370,6 @@
                     let imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
                     let data = imageData.data
 
-                    // Get layer's original pixels, to know where its coloured pixels should be applied
-                    tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height) 
-
-                    // Draw the image
-                    this.drawLayerImage(tmpCtx, image, layer.transform)
-
-                    // Get pixels data
-                    let originalLayerData = tmpCtx.getImageData(0, 0, this.canvas.width, this.canvas.height).data
-
                     // Get black and white version of the layer's pixels
                     let bwImage = await this.loadImage(layer.bwSrc)
                     tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height) 

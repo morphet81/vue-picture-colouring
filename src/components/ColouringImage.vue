@@ -411,7 +411,7 @@
                     // Now for each pixel, if the pixel should be coloured and the layer at this pixel is opaque, we apply the color
                     for (let i = 0; i < data.length; i += 4) {
                         if (pixelsData[i+3] && bwLayerData[i+3]) {
-                            if (layer.pixels[i/4].sticker) {
+                            if (layer.pixels[i/4] && layer.pixels[i/4].sticker) {
                                 data[i] = pixelsData[i]
                                 data[i+1] = pixelsData[i+1]
                                 data[i+2] = pixelsData[i+2]

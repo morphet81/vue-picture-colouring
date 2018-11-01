@@ -5,9 +5,6 @@
             <img class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : ''" :src="subLayer.src" :id="`subLayer${i}`" v-if="!subLayer.canvas"/>
         </div>
 
-        <!-- Hidden canvas used at init for getting black and white image pixels and make snapshots -->
-        <!-- <canvas class="rendering-canvas" ref="tmpCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas> -->
-
         <!-- Hidden canvas used between main layer switching -->
         <canvas ref="tmpCanvas" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
         <canvas ref="tmpCanvas2" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
@@ -54,10 +51,6 @@
             canvas () {
                 return this.$refs.canvas
             },
-
-            // utilCanvas () {
-            //     return this.$refs.utilCanvas
-            // },
 
             tmpCanvas () {
                 return this.$refs.tmpCanvas
@@ -299,42 +292,46 @@
              * Initialize the scene
              */
             async init () {
-                // Load the main layer image
-                let image = new Image()
-                image.onload = () => {
-                    let ctx = this.tmpCanvas.getContext('2d')
-                    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+                return new Promise((resolve, reject) => {
+                    // Load the main layer image
+                    let image = new Image()
+                    image.onload = () => {
+                        let ctx = this.tmpCanvas.getContext('2d')
+                        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        
+                        // Draw the image
+                        this.drawLayerImage(ctx, image)
+        
+                        // Init an array to keep in memory what color was used on each pixel
+                        this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
+        
+                        // Keep an array of original pixels values
+                        this.originalPixels = this.getPixels(this.tmpCanvas)
+        
+                        // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
+                        this.registerReferencePixels()
+                            .then(async () => {
+                                let mainCtx = this.canvas.getContext('2d')
     
-                    // Draw the image
-                    this.drawLayerImage(ctx, image)
+                                // We'll draw sublayers if they are canvas type
+                                await this.drawCanvasLayers(mainCtx, this.subLayers)
     
-                    // Init an array to keep in memory what color was used on each pixel
-                    this.colouredPixels = new Array(this.canvas.width * this.canvas.height)
+                                // Draw the main layer image
+                                this.drawLayerImage(mainCtx, image)
     
-                    // Keep an array of original pixels values
-                    this.originalPixels = this.getPixels(this.tmpCanvas)
+                                // We'll draw uplayers if they are canvas type
+                                await this.drawCanvasLayers(mainCtx, this.upLayers)
     
-                    // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
-                    this.registerReferencePixels()
-                        .then(async () => {
-                            let mainCtx = this.canvas.getContext('2d')
-
-                            // We'll draw sublayers if they are canvas type
-                            await this.drawCanvasLayers(mainCtx, this.subLayers)
-
-                            // Draw the main layer image
-                            this.drawLayerImage(mainCtx, image)
-
-                            // We'll draw uplayers if they are canvas type
-                            await this.drawCanvasLayers(mainCtx, this.upLayers)
-
-                            // Keep the pixels of the current initial main canvas
-                            this.withLayersPixels = this.getPixels(this.canvas)
-
-                            this.$emit('initialized')
-                        })
-                }
-                image.src = this.src
+                                // Keep the pixels of the current initial main canvas
+                                this.withLayersPixels = this.getPixels(this.canvas)
+    
+                                this.$emit('initialized')
+                                resolve()
+                            })
+                    }
+                    image.onerror = reject
+                    image.src = this.src
+                })
             },
 
             /**

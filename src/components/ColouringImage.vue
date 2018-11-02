@@ -2,7 +2,7 @@
     <div ref="vpcImage" class="vpc-image" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
         <div ref="subLayers" class="secondary-layer-container sublayer-container" :style="subLayerStyle(i)" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
-            <img class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : ''" :src="subLayer.src" :id="`subLayer${i}`" v-if="!subLayer.canvas"/>
+            <img :ref="`subLayer${i}`" class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : ''" :src="subLayer.src" v-if="!subLayer.canvas"/>
             <canvas :ref="`subLayer${i}`" :style="canvasStyle" :width="width" :height="height" v-else></canvas>
         </div>
 
@@ -15,7 +15,7 @@
 
         <!-- Up layers that will be integrated to snapshot but not possible to draw on -->
         <div ref="upLayers" class="secondary-layer-container uplayer-container" :style="upLayerStyle(i)" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
-            <img class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : ''" :src="upLayer.src" :id="`upLayer${i}`" v-if="!upLayer.canvas"/>
+            <img :ref="`upLayer${i}`" class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : ''" :src="upLayer.src" v-if="!upLayer.canvas"/>
             <canvas :ref="`upLayer${i}`" :style="canvasStyle" :width="width" :height="height" v-else></canvas>
         </div>
     </div>
@@ -609,8 +609,7 @@
              */
             drawSecondaryLayer (ctx, layers, refKey, applyTransformations) {
                 for (var i = 0; i < layers.length; i++) {
-                    if (layers[i].canvas) continue
-                    this.drawLayerImage(ctx, document.getElementById(`${refKey}${i}`), applyTransformations && layers[i].transform)
+                    this.drawLayerImage(ctx, this.$refs[`${refKey}${i}`][0], applyTransformations && layers[i].transform && !layers[i].canvas)
                 }
             },
 

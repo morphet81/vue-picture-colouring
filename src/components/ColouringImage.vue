@@ -1,8 +1,9 @@
 <template>
     <div ref="vpcImage" class="vpc-image" @click="onClick" @touchstart="onTouchStart" @touchmove="onSwipe">
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
-        <div class="secondary-layer-container sublayer-container" :style="subLayerStyle(i)" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
+        <div ref="subLayers" class="secondary-layer-container sublayer-container" :style="subLayerStyle(i)" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
             <img class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : ''" :src="subLayer.src" :id="`subLayer${i}`" v-if="!subLayer.canvas"/>
+            <canvas :ref="`subLayer${i}`" :style="canvasStyle" :width="width" :height="height" v-else></canvas>
         </div>
 
         <!-- Hidden canvas used between main layer switching -->
@@ -10,11 +11,12 @@
         <canvas ref="tmpCanvas2" :style="canvasStyle" :width="width" :height="height" v-show="false"></canvas>
 
         <!-- Main drawing canvas -->
-        <canvas id="drawing-canvas" ref="canvas" :style="canvasStyle" :width="width" :height="height"></canvas>
+        <canvas ref="canvas" :style="canvasStyle" :width="width" :height="height"></canvas>
 
         <!-- Up layers that will be integrated to snapshot but not possible to draw on -->
-        <div class="secondary-layer-container uplayer-container" :style="upLayerStyle(i)" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
+        <div ref="upLayers" class="secondary-layer-container uplayer-container" :style="upLayerStyle(i)" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
             <img class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : ''" :src="upLayer.src" :id="`upLayer${i}`" v-if="!upLayer.canvas"/>
+            <canvas :ref="`upLayer${i}`" :style="canvasStyle" :width="width" :height="height" v-else></canvas>
         </div>
     </div>
 </template>
@@ -33,7 +35,6 @@
                 bwImage: null,
                 canvasBoundingClientRect: null,
                 originalPixels: [],         // Pixels of the original main layer
-                withLayersPixels: [],       // Pixels of the original main layer + up and sub layers (if they are drawn in the canvas)
                 referencePixels: [],        // Will be used to colourize the picture, can be the black and white version if given
                 colouredPixels: [],         // Keep information of all user's drawing and stickings, independently from any layer
                 startY: 0,
@@ -291,7 +292,7 @@
             /**
              * Initialize the scene
              */
-            async init () {
+            init () {
                 return new Promise((resolve, reject) => {
                     // Load the main layer image
                     let image = new Image()
@@ -312,18 +313,18 @@
                         this.registerReferencePixels()
                             .then(async () => {
                                 let mainCtx = this.canvas.getContext('2d')
+
+                                // Clear main context
+                                mainCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
     
                                 // We'll draw sublayers if they are canvas type
-                                await this.drawCanvasLayers(mainCtx, this.subLayers)
+                                this.drawCanvasLayers(mainCtx, this.subLayers)
     
                                 // Draw the main layer image
                                 this.drawLayerImage(mainCtx, image)
     
                                 // We'll draw uplayers if they are canvas type
-                                await this.drawCanvasLayers(mainCtx, this.upLayers)
-    
-                                // Keep the pixels of the current initial main canvas
-                                this.withLayersPixels = this.getPixels(this.canvas)
+                                this.drawCanvasLayers(mainCtx, this.upLayers, 'up')
     
                                 this.$emit('initialized')
                                 resolve()
@@ -337,93 +338,35 @@
             /**
              * Draw a list of layers inside the main canvas
              */
-            async drawCanvasLayers (context, layers) {
-                for (let layer of layers) {
+            drawCanvasLayers (context, layers, floor = 'sub') {
+                for (let i = 0; i < layers.length; i++) {
+                    let layer = layers[i]
+
                     if (layer.canvas) {
-                        await this.drawCanvasLayer(context, layer)
+                        // Get the canvas we created for this layer
+                        let canvas = this.$refs[`${floor}Layer${i}`][0]
+                        let ctx = canvas.getContext('2d')
+
+                        // Clear context and save state
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+                        ctx.save()
+
+                        // Calculate transformation values
+                        let scale = this.zoomLevel / layer.zoomLevel
+                        let rotation = this.rotation - (layer.rotation || 0)
+
+                        // Apply transformations
+                        ctx.translate(canvas.width / 2, canvas.height / 2)
+                        ctx.scale(scale, scale)
+                        ctx.rotate(rotation)
+                        ctx.translate(-canvas.width / 2, -canvas.height / 2)
+
+                        // Draw
+                        ctx.drawImage(layer.canvas, 0, 0, canvas.width, canvas.height)
+
+                        // Restore context
+                        ctx.restore()
                     }
-                }
-            },
-
-            /**
-             * Draw an up or sub layer directly inside the main canvas
-             */
-            async drawCanvasLayer (context, layer) {
-                // Will use the temp canvas for some stuff
-                let tmpCtx = this.tmpCanvas.getContext('2d')
-
-                // Load the image
-                let image = await this.loadImage(layer.src)
-
-                // Save the context, cause we might need to apply transformations
-                context.save()
-
-                // Draw the layer image
-                this.drawLayerImage(context, image, layer.transform)
-
-                // If the layer provides coloured pixels, we need to apply them ONLY where it should be
-                if (layer.pixels) {
-                    // We the current image cata of the main drawing canvas
-                    let imageData = context.getImageData(0, 0, this.canvas.width, this.canvas.height)
-                    let data = imageData.data
-
-                    // Get black and white version of the layer's pixels
-                    let bwImage = await this.loadImage(layer.bwSrc)
-                    tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height) 
-                    this.drawLayerImage(tmpCtx, bwImage, layer.transform)
-                    let bwLayerData = tmpCtx.getImageData(0, 0, this.canvas.width, this.canvas.height).data
-
-                    // Get layer's coloured pixels data
-                    let pixelsData = this.clonePixelsAsData(layer.pixels)
-
-                    // If layer zoom level is different than current, we need to get the layers colored pixels data 
-                    // relatively to current zoom level
-                    // First put the coloured pixel data into the first tmp canvas
-                    if (this.zoomLevel !== layer.zoomLevel) {
-                        let ratio = this.zoomLevel / layer.zoomLevel
-                        tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-                        tmpCtx.putImageData(new ImageData(new Uint8ClampedArray(pixelsData), this.canvas.width, this.canvas.height), 0, 0)
-
-                        // Then use the second temp canvas, sized as the layer inside the current scene
-                        // We draw the first temp canvas inside the second
-                        this.tmpCanvas2.width = this.canvas.width * ratio
-                        this.tmpCanvas2.height = this.canvas.height * ratio
-                        let resizedCtx = this.tmpCanvas2.getContext('2d')
-                        resizedCtx.drawImage(this.tmpCanvas, 0, 0, this.tmpCanvas2.width, this.tmpCanvas2.height)
-
-                        // Then we draw back the second temp canvas into the first one at the right position
-                        tmpCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-                        tmpCtx.drawImage(
-                            this.tmpCanvas2,
-                            (this.canvas.width - this.tmpCanvas2.width) / 2,
-                            (this.canvas.height - this.tmpCanvas2.height) / 2,
-                            this.tmpCanvas2.width,
-                            this.tmpCanvas2.height,
-                        )
-
-                        // Then get pixels data
-                        pixelsData = tmpCtx.getImageData(0, 0, this.canvas.width, this.canvas.height).data
-                    }
-
-                    // Now for each pixel, if the pixel should be coloured and the layer at this pixel is opaque, we apply the color
-                    for (let i = 0; i < data.length; i += 4) {
-                        if (pixelsData[i+3] && bwLayerData[i+3]) {
-                            if (layer.pixels[i/4] && layer.pixels[i/4].sticker) {
-                                data[i] = pixelsData[i]
-                                data[i+1] = pixelsData[i+1]
-                                data[i+2] = pixelsData[i+2]
-                                data[i+3] = pixelsData[i+3]
-                            } else {
-                                data[i] = (bwLayerData[i] / 255) * pixelsData[i]
-                                data[i+1] = (bwLayerData[i+1] / 255) * pixelsData[i+1]
-                                data[i+2] = (bwLayerData[i+2] / 255) * pixelsData[i+2]
-                                data[i+3] = pixelsData[i+3]
-                            }
-                        }
-                    }
-
-                    // Finally update the main canvas data
-                    context.putImageData(imageData, 0, 0)
                 }
             },
 
@@ -579,10 +522,10 @@
                             // If the original main layer image is transparent, we do not want this pixel to be the sticker's
                             // So we reset to the original value (mainlayer + sub and up layers)
                             if (!this.originalPixels[pos+3]) {
-                                imgData.data[pos] = this.withLayersPixels[pos]
-                                imgData.data[pos+1] = this.withLayersPixels[pos+1]
-                                imgData.data[pos+2] = this.withLayersPixels[pos+2]
-                                imgData.data[pos+3] = this.withLayersPixels[pos+3]
+                                imgData.data[pos] = this.originalPixels[pos]
+                                imgData.data[pos+1] = this.originalPixels[pos+1]
+                                imgData.data[pos+2] = this.originalPixels[pos+2]
+                                imgData.data[pos+3] = this.originalPixels[pos+3]
                             }
 
                             // We keep colored pixels. Using the util context image data for doing so
@@ -766,7 +709,7 @@
 
                 // Load the new layer
                 var image = new Image()
-                image.onload = async () => {
+                image.onload = () => {
                     let ctx = this.tmpCanvas.getContext('2d')
                     ctx.clearRect(0, 0, this.tmpCanvas.width, this.tmpCanvas.height)
 
@@ -779,18 +722,9 @@
 
                     // Then clear the context again before drawing actual content
                     ctx.clearRect(0, 0, this.tmpCanvas.width, this.tmpCanvas.height)
-
-                    // We'll draw sublayers if they are canvas type
-                    await this.drawCanvasLayers(ctx, this.subLayers)
     
                     // Draw the main layer image
                     this.drawLayerImage(ctx, image)
-
-                    // We'll draw uplayers if they are canvas type
-                    await this.drawCanvasLayers(ctx, this.upLayers)
-
-                    // Keep the pixels of the current initial main canvas
-                    this.withLayersPixels = this.getPixels(this.tmpCanvas)
                 
                     // Get black and white image pixels if there is one. This will allow to not mix colors when coloring a pixel
                     this.registerReferencePixels()

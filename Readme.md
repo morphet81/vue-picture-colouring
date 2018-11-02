@@ -67,13 +67,28 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 
 ## Sublayers and Uplayers
 
-Sublalyers and Uplayers are objects giving an image src and indicating if the scene transformations should be applied. This is useful
-if you have for example a background. It should not be rotated nor scaled to have a nice final result.
+Sublalyers and Uplayers are objects giving information for drawing layer below or above your main layer. They can have 2 different natures.
+
+### Image element
+
+It will be inserted as an image. Just give the ```src``` and indicate if transformations you gave for the scene should be applied to this layer.
 
 ```
 {
     src: 'path/to/image',
     transform: true|false,
+}
+```
+
+### Canvas element
+
+It will insert a ```canvas``` element that is a clone of the canvas you give in the object. The ```zoomLevel``` and ```rotation`` you give for this canvas is the original transformation you applied on this layer. The idea is to allow you to use a ```vue-picture-colouring``` canvas that you previously created as a layer of the current canvas you are colouring.
+
+```json
+{
+    canvas: canvas element,
+    zoomLevel: zoom level,
+    rotation: rotation value,
 }
 ```
 

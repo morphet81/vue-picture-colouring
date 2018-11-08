@@ -316,7 +316,7 @@
 
                                 // Clear main context
                                 mainCtx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    
+
                                 // We'll draw sublayers if they are canvas type
                                 this.drawCanvasLayers(mainCtx, this.subLayers)
     
@@ -420,7 +420,7 @@
              * Delete all drawings and stickers
              */
             clear () {
-                this.init()
+                this.setColouredPixels(new Array(this.canvas.width * this.canvas.height))
             },
 
             /**
@@ -438,11 +438,18 @@
                 for (let i = 0; i < colouredPixels.length; i++) {
                     let pixel = colouredPixels[i]
 
-                    if (!pixel) continue
-
                     let pos = i*4
 
+                    // If transparent, no need to colorize
                     if (!this.originalPixels[pos+3]) continue
+
+                    // If no pixel, we apply original color
+                    if (!pixel) {
+                        imgData.data[pos] = this.referencePixels[pos]
+                        imgData.data[pos+1] = this.referencePixels[pos+1]
+                        imgData.data[pos+2] = this.referencePixels[pos+2]
+                        continue
+                    }
 
                     if (pixel.sticker) {
                         imgData.data[pos] = pixel.red

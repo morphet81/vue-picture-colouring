@@ -70,16 +70,17 @@ export default {
       ],
       upLayers: [
         { 
-          src: require("./assets/case-3.png"), 
-          transform: true,
-          canvas: true,
-          pixels: null,
+          // src: require("./assets/case-3.png"), 
+          // transform: true,
+          // canvas: true,
+          // pixels: null,
         }
       ],
       subLayers: [
         { 
           src: require("./assets/background.png"), 
-          transform: false 
+          transform: false,
+          opaqueLayer: '#000000aa'
         }
       ],
       stickers: [

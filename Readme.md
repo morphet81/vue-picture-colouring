@@ -69,6 +69,10 @@ The tool will paint the given color unless a sticker URL is given. The touchmove
 
 Sublalyers and Uplayers are objects giving information for drawing layer below or above your main layer. They can have 2 different natures.
 
+You can optionnally render an opaque layer of your choice abover a sub or up layer. This layer will NOT be rendered in the final result. It can be useful to partially hide sub and up layers from the user to allow him to concentrate on the drawing area.
+
+WARNING: at this point, adding a opaque layer to an up layer will also hide the main layer...
+
 ### Image element
 
 It will be inserted as an image. Just give the ```src``` and indicate if transformations you gave for the scene should be applied to this layer.
@@ -77,6 +81,7 @@ It will be inserted as an image. Just give the ```src``` and indicate if transfo
 {
     src: 'path/to/image',
     transform: true|false,
+    opaqueLayer: 'color of a layer that will be inserted right above this layer',
 }
 ```
 
@@ -89,6 +94,7 @@ It will insert a ```canvas``` element that is a clone of the canvas you give in 
     canvas: canvas element,
     zoomLevel: zoom level,
     rotation: rotation value,
+    opaqueLayer: 'color of a layer that will be inserted right above this layer',
 }
 ```
 

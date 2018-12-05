@@ -6,7 +6,8 @@
         :sticker-width="stickerSize" :sticker-height="stickerSize"
         :bw-src="mainLayersBw[currentMainLayer]"
         :sub-layers="subLayers" :up-layers="upLayers" :zoom-level="zoomLevel" :rotation="rotation"
-        @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd" @initialized="onInitialized"></vpc-image>
+        @refresh-start="onRefreshStart" @refresh-end="onRefreshEnd" @initialized="onInitialized"
+        layers-filter="blur(4px)"></vpc-image>
     </div>
     <div class="colors">
       <div class="color-container" v-for="(color, i) in colors" :key="i">
@@ -70,8 +71,8 @@ export default {
       ],
       upLayers: [
         { 
-          // src: require("./assets/case-3.png"), 
-          // transform: true,
+          src: require("./assets/case-3.png"), 
+          transform: true,
           // canvas: true,
           // pixels: null,
         }
@@ -80,7 +81,6 @@ export default {
         { 
           src: require("./assets/background.png"), 
           transform: false,
-          opaqueLayer: '#000000aa'
         }
       ],
       stickers: [

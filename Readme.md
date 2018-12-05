@@ -125,8 +125,8 @@ You can easily save the current coloured pixels list using the ```cloneColouredP
 |------------|---------------------------------------------------------------------------------------------------------------------------------------|-----------|
 |src    |The main layer image, the one you will be able to colour and put stickers on|null|
 |bw-src|The black and white version of the main layer image. This allow to colourize nicely without colours stacking above each others. This is useless if your main src is already black and white.|null|
-|width|The width of the canvas<br>*Deprecated: Now uses the dimensions given to the component*|640|
-|height|The height of the canvas<br>*Deprecated: Now uses the dimensions given to the component*|480|
+|width|The width of the canvas<br>**_Deprecated: Now uses the dimensions given to the component_**|640|
+|height|The height of the canvas<br>**_Deprecated: Now uses the dimensions given to the component_**|480|
 |color|The color that is applied by the tool on the picture|'#dd3b3b'|
 |tool-width|Painting tool width|18|
 |sticker|The source URL of the sticker that is stuck on the picture|null|
@@ -138,6 +138,7 @@ You can easily save the current coloured pixels list using the ```cloneColouredP
 |zoom-level|Initial zoom level to be applied to the scene|1|
 |rotation|Initial angle in degrees to be applied to the scene|0|
 |canvas-ratio|Canvas scale ratio. This allows to improve final image resolution|2|
+|layers-filter|CSS filter to be applied to up and sub layers. Will not be rendered on a snapshot|''|
 
 ## Events
 

@@ -3,8 +3,8 @@
         <!-- Sub layers that will be integrated to snapshot but not possible to draw on -->
         <div ref="subLayers" class="secondary-layer-container sublayer-container" :style="subLayerStyle(i)" v-for="(subLayer, i) in subLayers" :key="`subLayer${i}`">
             <!-- Render the layer, as an image or a canvas -->
-            <img :ref="`subLayer${i}`" class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : ''" :src="subLayer.src" v-if="!subLayer.canvas"/>
-            <canvas :ref="`subLayer${i}`" :style="canvasStyle" :width="width" :height="height" v-else></canvas>
+            <img :ref="`subLayer${i}`" class="secondary-layer" :style="subLayer.transform ? secondaryLayerStyle : layerFilterStyle" :src="subLayer.src" v-if="!subLayer.canvas"/>
+            <canvas :ref="`subLayer${i}`" :style="layerCanvasStyle" :width="width" :height="height" v-else></canvas>
 
             <!-- Render an opaque layer right above if requested -->
             <div class="secondary-layer" :style="`background-color: ${subLayer.opaqueLayer}`" v-if="subLayer.opaqueLayer"></div>
@@ -20,8 +20,8 @@
         <!-- Up layers that will be integrated to snapshot but not possible to draw on -->
         <div ref="upLayers" class="secondary-layer-container uplayer-container" :style="upLayerStyle(i)" v-for="(upLayer, i) in upLayers" :key="`upLayer${i}`">
             <!-- Render the layer, as an image or a canvas -->
-            <img :ref="`upLayer${i}`" class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : ''" :src="upLayer.src" v-if="!upLayer.canvas"/>
-            <canvas :ref="`upLayer${i}`" :style="canvasStyle" :width="width" :height="height" v-else></canvas>
+            <img :ref="`upLayer${i}`" class="secondary-layer" :style="upLayer.transform ? secondaryLayerStyle : layerFilterStyle" :src="upLayer.src" v-if="!upLayer.canvas"/>
+            <canvas :ref="`upLayer${i}`" :style="layerCanvasStyle" :width="width" :height="height" v-else></canvas>
 
             <!-- Render an opaque layer right above if requested -->
             <div class="secondary-layer" :style="`background-color: ${upLayer.opaqueLayer}`" v-if="upLayer.opaqueLayer"></div>
@@ -57,6 +57,16 @@
                 }
             },
 
+            layerFilterStyle () {
+                return { 
+                    'filter': this.layersFilter 
+                }
+            },
+
+            layerCanvasStyle () {
+                return Object.assign(this.canvasStyle, this.layerFilterStyle)
+            },
+
             canvas () {
                 return this.$refs.canvas
             },
@@ -70,9 +80,12 @@
             },
 
             secondaryLayerStyle () {
-                return {
-                    'transform': `scale(${this.appliedZoom}) rotate(${this.rotation}deg)`
-                }
+                return Object.assign(
+                    this.layerFilterStyle,
+                    {
+                        'transform': `scale(${this.appliedZoom}) rotate(${this.rotation}deg)`
+                    }
+                )
             },
 
             normalizedToolWidth () {
@@ -192,6 +205,14 @@
             canvasRatio: {
                 type: Number,
                 default: 4,
+            },
+
+            /**
+             * CSS filter to apply on each sub and up layer
+             */
+            layersFilter: {
+                type: String,
+                default: '',
             }
         },
         methods: {
